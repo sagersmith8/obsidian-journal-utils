@@ -1,4 +1,4 @@
-import { App, Editor, Modal, Notice, TFile } from 'obsidian';
+import { App, Editor, Modal, Notice, Setting, TFile } from 'obsidian';
 import { openReclassifyPersonModal } from './ReclassifyPersonModal';
 import type { EntityService } from '../services/EntityService';
 import type { MentionTrackingService } from '../services/MentionTrackingService';
@@ -41,7 +41,9 @@ export class MemberPickerModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('journal-utils-member-picker');
 
-		contentEl.createEl('h2', { text: `Create group: ${this.ctx.groupName}` });
+		new Setting(contentEl)
+			.setName(`Create group: ${this.ctx.groupName}`)
+			.setHeading();
 		contentEl.createEl('p', {
 			text: 'Select members. Missing person notes are created when you confirm.',
 			cls: 'journal-utils-member-picker-desc',

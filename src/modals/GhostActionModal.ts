@@ -1,4 +1,4 @@
-import { App, Editor, Modal, Notice, TFile } from 'obsidian';
+import { App, Editor, Modal, Notice, Setting, TFile } from 'obsidian';
 import { openMemberPicker } from './MemberPickerModal';
 import type { EntityService } from '../services/EntityService';
 import type { MentionTrackingService } from '../services/MentionTrackingService';
@@ -31,7 +31,7 @@ export class GhostActionModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('journal-utils-ghost-action-modal');
 
-		contentEl.createEl('h2', { text: this.ghost.name });
+		new Setting(contentEl).setName(this.ghost.name).setHeading();
 		contentEl.createEl('p', {
 			text: `${this.ghost.mentionCount} mention(s) in your vault, no profile yet.`,
 			cls: 'journal-utils-ghost-action-desc',

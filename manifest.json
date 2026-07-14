@@ -1,7 +1,7 @@
 {
 	"id": "journal-utils",
 	"name": "Journal Utils",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"minAppVersion": "1.13.0",
 	"description": "Mobile wikilink pickers for people, groups, and locations with automatic mention tracking in frontmatter.",
 	"author": "sagersmith8",

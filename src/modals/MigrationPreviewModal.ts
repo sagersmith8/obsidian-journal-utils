@@ -1,4 +1,4 @@
-import { App, Modal, Notice } from 'obsidian';
+import { App, Modal, Notice, Setting } from 'obsidian';
 import type JournalUtilsPlugin from '../main';
 import type { MigrationService } from '../services/MigrationService';
 import {
@@ -24,7 +24,7 @@ export class MigrationPreviewModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('journal-utils-migration-modal');
 
-		contentEl.createEl('h2', { text: 'Migrate people folder' });
+		new Setting(contentEl).setName('Migrate people folder').setHeading();
 		contentEl.createEl('p', {
 			text: 'Commit or sync your vault before migrating. Obsidian will update wikilinks when files move.',
 			cls: 'journal-utils-migration-warning',

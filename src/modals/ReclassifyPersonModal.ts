@@ -1,4 +1,4 @@
-import { App, Modal, TFile } from 'obsidian';
+import { App, Modal, Setting, TFile } from 'obsidian';
 
 export interface ReclassifyPersonContext {
 	groupName: string;
@@ -20,7 +20,9 @@ export class ReclassifyPersonModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('journal-utils-reclassify-modal');
 
-		contentEl.createEl('h2', { text: `Convert ${this.ctx.groupName} to a group?` });
+		new Setting(contentEl)
+			.setName(`Convert ${this.ctx.groupName} to a group?`)
+			.setHeading();
 		contentEl.createEl('p', {
 			text: `A person note already exists at ${this.ctx.personFile.path}. Convert it to a group note with your selected members? Existing note content will be kept.`,
 			cls: 'journal-utils-reclassify-desc',
