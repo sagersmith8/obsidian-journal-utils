@@ -1,10 +1,13 @@
 import { App, Editor, Modal, Notice, TFile } from 'obsidian';
+import { openMemberPicker } from './MemberPickerModal';
 import type { EntityService } from '../services/EntityService';
-import type { GhostEntry } from '../types';
+import type { EntityEntry, GhostEntry } from '../types';
 import { buildWikilink, formatWikilinkForFile } from '../utils/links';
 
 export interface GhostActionContext {
 	entityService: EntityService;
+	people: EntityEntry[];
+	ghosts: GhostEntry[];
 	editor: Editor;
 	sourcePath: string;
 	ignoreGhost: (name: string) => Promise<void>;
@@ -33,10 +36,7 @@ export class GhostActionModal extends Modal {
 		this.addAction('Insert link only', () => this.insertLinkOnly());
 		this.addAction('Create person note', () => void this.createPerson());
 		this.addAction('Create location note', () => void this.createLocation());
-		this.addAction('Create as group (Step 8)', () => {
-			new Notice('Group creation with members arrives in the next update.');
-			this.close();
-		});
+		this.addAction('Create as group', () => this.createAsGroup());
 		this.addAction('Ignore', () => void this.ignore(), true);
 	}
 
@@ -54,6 +54,19 @@ export class GhostActionModal extends Modal {
 		this.ctx.editor.replaceSelection(buildWikilink(this.ghost.name));
 		this.refocusEditor();
 		this.close();
+	}
+
+	private createAsGroup(): void {
+		this.close();
+		openMemberPicker(this.app, {
+			groupName: this.ghost.name,
+			people: this.ctx.people,
+			ghosts: this.ctx.ghosts,
+			entityService: this.ctx.entityService,
+			editor: this.ctx.editor,
+			sourcePath: this.ctx.sourcePath,
+			onDone: () => this.refocusEditor(),
+		});
 	}
 
 	private async createPerson(): Promise<void> {

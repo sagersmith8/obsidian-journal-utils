@@ -67,6 +67,13 @@ describe('buildLocationPath', () => {
 describe('isPrimaryGroupNotePath', () => {
 	it('accepts canonical group notes', () => {
 		expect(isPrimaryGroupNotePath('people/groups/Ryersons/Ryersons.md')).toBe(true);
+		expect(isPrimaryGroupNotePath('people/groups/The Ryersons/The Ryersons.md')).toBe(
+			true,
+		);
+	});
+
+	it('rejects non-primary group paths', () => {
+		expect(isPrimaryGroupNotePath('people/groups/The Ryersons/member.md')).toBe(false);
 	});
 });
 

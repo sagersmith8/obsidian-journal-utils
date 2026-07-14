@@ -15,6 +15,7 @@ import { sanitizeEntityName } from '../utils/paths';
 export type PersonPickerItem =
 	| { type: 'header'; label: string }
 	| { type: 'person'; entry: EntityEntry }
+	| { type: 'group'; entry: EntityEntry }
 	| { type: 'ghost'; ghost: GhostEntry }
 	| { type: 'create'; name: string };
 
@@ -23,6 +24,7 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		app: App,
 		private entityService: EntityService,
 		private people: EntityEntry[],
+		private groups: EntityEntry[],
 		private ghosts: GhostEntry[],
 		private editor: Editor,
 		private sourcePath: string,
@@ -34,6 +36,7 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 	getItems(): PersonPickerItem[] {
 		return [
 			...this.people.map((entry) => ({ type: 'person' as const, entry })),
+			...this.groups.map((entry) => ({ type: 'group' as const, entry })),
 			...this.ghosts.map((ghost) => ({ type: 'ghost' as const, ghost })),
 		];
 	}
@@ -64,6 +67,9 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		if (item.type === 'ghost') {
 			el.addClass('journal-utils-picker-ghost');
 		}
+		if (item.type === 'group') {
+			el.addClass('journal-utils-picker-group');
+		}
 		super.renderSuggestion(suggestion, el);
 	}
 
@@ -71,11 +77,15 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		const peopleItems = this.people.map(
 			(entry): PersonPickerItem => ({ type: 'person', entry }),
 		);
+		const groupItems = this.groups.map(
+			(entry): PersonPickerItem => ({ type: 'group', entry }),
+		);
 		const ghostItems = this.ghosts.map(
 			(ghost): PersonPickerItem => ({ type: 'ghost', ghost }),
 		);
 
 		const peopleSuggestions = this.matchItems(peopleItems, query);
+		const groupSuggestions = this.matchItems(groupItems, query);
 		const ghostSuggestions = this.matchItems(ghostItems, query);
 		const suggestions: FuzzyMatch<PersonPickerItem>[] = [];
 
@@ -87,6 +97,16 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 				});
 			}
 			suggestions.push(...peopleSuggestions);
+		}
+
+		if (groupSuggestions.length > 0) {
+			if (!query) {
+				suggestions.push({
+					item: { type: 'header', label: 'Groups' },
+					match: { score: 0, matches: [] },
+				});
+			}
+			suggestions.push(...groupSuggestions);
 		}
 
 		if (ghostSuggestions.length > 0) {
@@ -121,6 +141,8 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		if (item.type === 'ghost') {
 			new GhostActionModal(this.app, item.ghost, {
 				entityService: this.entityService,
+				people: this.people,
+				ghosts: this.ghosts,
 				editor: this.editor,
 				sourcePath: this.sourcePath,
 				ignoreGhost: this.ignoreGhost,
@@ -160,6 +182,7 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		const lower = safeName.toLowerCase();
 		const exists =
 			this.people.some((entry) => entry.displayName.toLowerCase() === lower) ||
+			this.groups.some((entry) => entry.displayName.toLowerCase() === lower) ||
 			this.ghosts.some((ghost) => ghost.name.toLowerCase() === lower);
 
 		if (exists) {
@@ -201,6 +224,7 @@ export function openPersonPicker(
 	app: App,
 	entityService: EntityService,
 	people: EntityEntry[],
+	groups: EntityEntry[],
 	ghosts: GhostEntry[],
 	editor: Editor,
 	sourceFile: TFile,
@@ -210,6 +234,7 @@ export function openPersonPicker(
 		app,
 		entityService,
 		people,
+		groups,
 		ghosts,
 		editor,
 		sourceFile.path,

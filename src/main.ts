@@ -91,6 +91,7 @@ export default class JournalUtilsPlugin extends Plugin {
 					this.app,
 					this.entityService,
 					this.entityService.getPeople(),
+					this.entityService.getGroups(),
 					this.ghostService.getGhosts(),
 					editor,
 					sourceFile,
@@ -107,6 +108,16 @@ export default class JournalUtilsPlugin extends Plugin {
 				const people = this.entityService.getPeople();
 				console.log('[Journal Utils] People:', people);
 				new Notice(`Logged ${people.length} people to console`);
+			},
+		});
+
+		this.addCommand({
+			id: 'log-groups-entities',
+			name: 'Log group entities (debug)',
+			callback: () => {
+				const groups = this.entityService.getGroups();
+				console.log('[Journal Utils] Groups:', groups);
+				new Notice(`Logged ${groups.length} groups to console`);
 			},
 		});
 

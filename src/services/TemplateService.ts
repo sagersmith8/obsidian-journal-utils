@@ -1,7 +1,9 @@
 import { App, TFile } from 'obsidian';
 import {
+	DEFAULT_GROUP_TEMPLATE,
 	DEFAULT_LOCATION_TEMPLATE,
 	DEFAULT_PERSON_TEMPLATE,
+	formatMembersYamlBlock,
 	slugifyTitle,
 	substituteTemplateVars,
 } from './templateVars';
@@ -38,5 +40,12 @@ export class TemplateService {
 
 	buildLocationVars(title: string): Record<string, string> {
 		return this.buildEntityVars(title);
+	}
+
+	buildGroupVars(title: string, memberNames: string[]): Record<string, string> {
+		return {
+			...this.buildEntityVars(title),
+			members: formatMembersYamlBlock(memberNames),
+		};
 	}
 }
