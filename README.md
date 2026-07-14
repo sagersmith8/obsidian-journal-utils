@@ -114,18 +114,24 @@ Desktop mobile emulation (dev console): `app.emulateMobile(true)` then reload th
 
 ### Releasing (maintainers)
 
+Automated via GitHub Actions when you push a **version tag** that matches `manifest.json`.
+
 ```bash
-# 1. Bump version in manifest.json AND package.json first
-# 2. Update versions.json with the new version → minAppVersion mapping
+# 1. Bump version in manifest.json, package.json, and versions.json
 npm test
 npm run build
 git add manifest.json package.json versions.json main.js
-git commit -m "Release X.Y.Z"
+git commit -m "Bump version to X.Y.Z"
 git push
-gh release create X.Y.Z main.js manifest.json styles.css --title "X.Y.Z" --notes "..."
+
+# 2. Tag and push — Release workflow builds and publishes assets
+git tag X.Y.Z
+git push origin X.Y.Z
 ```
 
-Release tag must match `manifest.json` version or BRAT will warn.
+The release workflow verifies `manifest.json` version equals the tag, runs tests, builds, and attaches `main.js`, `manifest.json`, and `styles.css` to the GitHub release.
+
+CI runs on every push/PR to `main` (test + build).
 
 ## License
 
