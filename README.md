@@ -2,6 +2,8 @@
 
 Mobile Obsidian plugin for fast **people**, **group**, and **location** wikilinks while journaling. Built for the [mind-palace](https://github.com/sagersmith8/mind-palace) vault workflow.
 
+> **Community listing:** This README is published on the [Journal Utils plugin page](https://community.obsidian.md/plugins/journal-utils). Edits here update what users see on [community.obsidian.md](https://community.obsidian.md) (the directory syncs from the repo).
+
 ## Features
 
 - **Insert person link** — picker with people, groups, ghosts, create-new, and convert-to-group
@@ -16,34 +18,39 @@ Mobile-only: commands register on phone/tablet, not desktop.
 
 ## Install
 
-### Option A: BRAT (recommended today)
+### Community Plugins (recommended)
 
-BRAT installs from **GitHub release assets**. Each release attaches `manifest.json`, `main.js`, and `styles.css` (tag must match `manifest.json` version).
+Journal Utils is listed in the [Obsidian Community directory](https://community.obsidian.md/plugins/journal-utils).
 
-1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) from Community Plugins.
+1. **Settings → Community plugins → Turn on community plugins** (disable Restricted Mode if prompted).
+2. **Browse** and search for **Journal Utils**, or open the listing directly and click **Add to Obsidian**.
+3. Enable the plugin under **Installed plugins**.
+
+Updates: **Settings → Community plugins → Check for updates**.
+
+**In-app search:** After a plugin passes review, Obsidian typically indexes it for Browse/search within **24 hours**. If it does not appear immediately, wait a day, then search again or use the [plugin page](https://community.obsidian.md/plugins/journal-utils) link. You can also install via URI: `obsidian://show-plugin?id=journal-utils`.
+
+### BRAT (beta / pre-release)
+
+Use [BRAT](https://github.com/TfTHacker/obsidian42-brat) to install from GitHub releases before they propagate, or to test unreleased builds:
+
+1. Install BRAT from Community Plugins.
 2. **Add Beta plugin** → `sagersmith8/obsidian-journal-utils`
 3. Enable **Journal Utils** under Community Plugins.
 4. Check for updates in BRAT when new versions ship.
 
-### Option B: Obsidian Community Plugins (public listing)
+BRAT pulls `manifest.json`, `main.js`, and `styles.css` from GitHub releases (tag must match `manifest.json` version).
 
-Submit through the [Obsidian Community directory](https://community.obsidian.md) (replaces the old `obsidian-releases` PR flow):
-
-1. Sign in at [community.obsidian.md](https://community.obsidian.md) with your Obsidian account.
-2. Link your GitHub account in your profile.
-3. **Plugins → New plugin** → enter `https://github.com/sagersmith8/obsidian-journal-utils`
-4. Ensure `manifest.json` on `main` is accurate (directory reads HEAD).
-5. Publish a GitHub release whose tag matches `manifest.json` version (1.2.0+).
-6. Agree to [developer policies](https://docs.obsidian.md/Developer+policies) and submit.
-
-Automated review runs on submit; fix any feedback, bump version, tag a new release, and resubmit.
-
-Release assets (`main.js`, `styles.css`) include [GitHub artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) so you can verify they were built from this repository:
+Release assets include [GitHub artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds):
 
 ```bash
 gh attestation verify main.js -R sagersmith8/obsidian-journal-utils
 gh attestation verify styles.css -R sagersmith8/obsidian-journal-utils
 ```
+
+### For plugin authors
+
+New plugins are submitted at [community.obsidian.md](https://community.obsidian.md) (not the old `obsidian-releases` PR flow). See [CONTRIBUTING.md](CONTRIBUTING.md) for development and release details.
 
 ## Mobile toolbar setup
 
@@ -127,6 +134,8 @@ All file access stays on your device; nothing is sent to external servers.
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, conventions, and how to open a PR.
+
 ```bash
 npm install
 npm run dev    # watch build
@@ -136,26 +145,7 @@ npm test       # vitest
 
 Desktop mobile emulation (dev console): `app.emulateMobile(true)` then reload the plugin.
 
-### Releasing (maintainers)
-
-Automated via GitHub Actions when you push a **version tag** that matches `manifest.json`.
-
-```bash
-# 1. Bump version in manifest.json, package.json, and versions.json
-npm test
-npm run build
-git add manifest.json package.json versions.json main.js
-git commit -m "Bump version to X.Y.Z"
-git push
-
-# 2. Tag and push — Release workflow builds and publishes assets
-git tag X.Y.Z
-git push origin X.Y.Z
-```
-
-The release workflow verifies `manifest.json` version equals the tag, runs tests, builds, generates [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) for `main.js` and `styles.css`, and attaches `main.js`, `manifest.json`, and `styles.css` to the GitHub release.
-
-CI runs on every push/PR to `main` (test + build).
+CI runs on every push/PR to `main` (test + build). Releases are tag-driven — details in [CONTRIBUTING.md](CONTRIBUTING.md#releases-maintainers).
 
 ## License
 
