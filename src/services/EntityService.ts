@@ -1,10 +1,16 @@
 import { App, TFile } from 'obsidian';
 import type { JournalUtilsSettings } from '../settings';
 import type { EntityEntry, EntityKind } from '../types';
-import { buildPersonPath, isPrimaryOrFlatPersonNotePath, sanitizeEntityName } from '../utils/paths';
+import {
+	buildLocationPath,
+	buildPersonPath,
+	isPrimaryOrFlatPersonNotePath,
+	sanitizeEntityName,
+} from '../utils/paths';
 import { ensureFolderExists } from '../utils/vault';
 import { getBacklinkCountForFile } from './backlinks';
 import { sortEntityEntries } from './entitySort';
+import { DEFAULT_LOCATION_TEMPLATE } from './templateVars';
 import { TemplateService } from './TemplateService';
 
 export class EntityService {
@@ -54,13 +60,25 @@ export class EntityService {
 	}
 
 	async createPerson(name: string): Promise<TFile> {
+		return this.createEntityNote('person', name);
+	}
+
+	async createLocation(name: string): Promise<TFile> {
+		return this.createEntityNote('location', name);
+	}
+
+	private async createEntityNote(kind: 'person' | 'location', name: string): Promise<TFile> {
 		const safeName = sanitizeEntityName(name);
 		if (!safeName) {
-			throw new Error('Invalid person name');
+			throw new Error(`Invalid ${kind} name`);
 		}
 
 		const settings = this.getSettings();
-		const path = buildPersonPath(safeName, settings.peopleFolder);
+		const path =
+			kind === 'person'
+				? buildPersonPath(safeName, settings.peopleFolder)
+				: buildLocationPath(safeName, settings.locationsFolder);
+
 		const existing = this.app.vault.getAbstractFileByPath(path);
 		if (existing instanceof TFile) {
 			return existing;
@@ -69,9 +87,16 @@ export class EntityService {
 		const folderPath = path.slice(0, path.lastIndexOf('/'));
 		await ensureFolderExists(this.app, folderPath);
 
+		const templatePath =
+			kind === 'person' ? settings.personTemplate : settings.locationTemplate;
+		const vars =
+			kind === 'person'
+				? this.templateService.buildPersonVars(safeName)
+				: this.templateService.buildLocationVars(safeName);
 		const content = await this.templateService.render(
-			settings.personTemplate,
-			this.templateService.buildPersonVars(safeName),
+			templatePath,
+			vars,
+			kind === 'location' ? DEFAULT_LOCATION_TEMPLATE : undefined,
 		);
 
 		return this.app.vault.create(path, content);

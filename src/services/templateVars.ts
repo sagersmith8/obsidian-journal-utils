@@ -7,6 +7,15 @@ photo:
 # {{title}}
 `;
 
+export const DEFAULT_LOCATION_TEMPLATE = `---
+tags:
+  - location
+type: location
+photo:
+---
+# {{title}}
+`;
+
 export function slugifyTitle(title: string): string {
 	return title
 		.trim()

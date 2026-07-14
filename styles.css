@@ -11,3 +11,20 @@
 .journal-utils-picker-ghost {
 	color: var(--text-accent);
 }
+
+.journal-utils-ghost-action-modal {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 1rem;
+}
+
+.journal-utils-ghost-action-desc {
+	color: var(--text-muted);
+	margin: 0 0 0.5rem;
+}
+
+.journal-utils-ghost-action-btn {
+	width: 100%;
+	margin: 0;
+}

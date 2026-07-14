@@ -43,6 +43,24 @@ export default class JournalUtilsPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	async ignoreGhost(name: string): Promise<void> {
+		const normalized = name.trim();
+		if (!normalized) {
+			return;
+		}
+
+		const lower = normalized.toLowerCase();
+		const alreadyIgnored = this.settings.ignoredLinks.some(
+			(term) => term.toLowerCase() === lower,
+		);
+		if (!alreadyIgnored) {
+			this.settings.ignoredLinks.push(normalized);
+			await this.saveSettings();
+		}
+
+		this.ghostService.invalidateCache();
+	}
+
 	private registerCacheInvalidationEvents(): void {
 		const invalidate = (): void => {
 			this.entityService.invalidateCache();
@@ -76,6 +94,7 @@ export default class JournalUtilsPlugin extends Plugin {
 					this.ghostService.getGhosts(),
 					editor,
 					sourceFile,
+					(name) => this.ignoreGhost(name),
 				);
 				return true;
 			},

@@ -6,9 +6,10 @@ import {
 	Notice,
 	TFile,
 } from 'obsidian';
+import { GhostActionModal } from './GhostActionModal';
 import type { EntityService } from '../services/EntityService';
 import type { EntityEntry, GhostEntry } from '../types';
-import { buildWikilink, formatWikilinkForFile } from '../utils/links';
+import { formatWikilinkForFile } from '../utils/links';
 import { sanitizeEntityName } from '../utils/paths';
 
 export type PersonPickerItem =
@@ -25,6 +26,7 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		private ghosts: GhostEntry[],
 		private editor: Editor,
 		private sourcePath: string,
+		private ignoreGhost: (name: string) => Promise<void>,
 	) {
 		super(app);
 	}
@@ -117,7 +119,12 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 			return;
 		}
 		if (item.type === 'ghost') {
-			this.insertGhostLink(item.ghost.name);
+			new GhostActionModal(this.app, item.ghost, {
+				entityService: this.entityService,
+				editor: this.editor,
+				sourcePath: this.sourcePath,
+				ignoreGhost: this.ignoreGhost,
+			}).open();
 			return;
 		}
 
@@ -173,11 +180,6 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		}
 	}
 
-	private insertGhostLink(name: string): void {
-		this.editor.replaceSelection(buildWikilink(name));
-		this.refocusEditor();
-	}
-
 	private insertLink(file: TFile): void {
 		const wikilink = formatWikilinkForFile(
 			this.app.metadataCache,
@@ -202,6 +204,7 @@ export function openPersonPicker(
 	ghosts: GhostEntry[],
 	editor: Editor,
 	sourceFile: TFile,
+	ignoreGhost: (name: string) => Promise<void>,
 ): void {
 	new PersonPickerModal(
 		app,
@@ -210,5 +213,6 @@ export function openPersonPicker(
 		ghosts,
 		editor,
 		sourceFile.path,
+		ignoreGhost,
 	).open();
 }

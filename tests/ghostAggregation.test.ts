@@ -3,6 +3,7 @@ import {
 	aggregateUnresolvedLinks,
 	buildGhostEntries,
 	isBlocklisted,
+	isIgnored,
 } from '../src/services/ghostAggregation';
 
 describe('aggregateUnresolvedLinks', () => {
@@ -38,5 +39,35 @@ describe('buildGhostEntries', () => {
 describe('isBlocklisted', () => {
 	it('matches case-insensitively', () => {
 		expect(isBlocklisted('gratitude', ['Gratitude'])).toBe(true);
+	});
+});
+
+describe('isIgnored', () => {
+	it('matches case-insensitively', () => {
+		expect(isIgnored('Thomas', ['thomas'])).toBe(true);
+		expect(isIgnored('Thomas', ['Joy'])).toBe(false);
+	});
+});
+
+describe('buildGhostEntries ignored links', () => {
+	it('filters ignored names on next getGhosts-style call', () => {
+		const counts = new Map([
+			['Thomas', 10],
+			['OldFriend', 3],
+		]);
+
+		const before = buildGhostEntries(counts, {
+			blocklist: [],
+			ignoredLinks: [],
+			existingNames: new Set(),
+		});
+		expect(before.map((g) => g.name)).toEqual(['Thomas', 'OldFriend']);
+
+		const after = buildGhostEntries(counts, {
+			blocklist: [],
+			ignoredLinks: ['OldFriend'],
+			existingNames: new Set(),
+		});
+		expect(after.map((g) => g.name)).toEqual(['Thomas']);
 	});
 });
