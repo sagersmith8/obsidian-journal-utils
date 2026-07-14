@@ -9,3 +9,8 @@ export interface EntityEntry {
 	backlinkCount: number;
 	path: string;
 }
+
+export interface GhostEntry {
+	name: string;
+	mentionCount: number;
+}

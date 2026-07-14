@@ -1,1 +1,13 @@
-/* Journal Utils plugin styles */
+.journal-utils-picker-header {
+	font-size: var(--font-ui-small);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-muted);
+	padding: 0.5rem 0.75rem 0.25rem;
+	pointer-events: none;
+}
+
+.journal-utils-picker-ghost {
+	color: var(--text-accent);
+}
