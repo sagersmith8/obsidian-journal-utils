@@ -112,3 +112,24 @@
 .journal-utils-member-actions button {
 	flex: 1;
 }
+
+.journal-utils-reclassify-modal {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 1rem;
+}
+
+.journal-utils-reclassify-desc {
+	color: var(--text-muted);
+	margin: 0;
+}
+
+.journal-utils-reclassify-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.journal-utils-reclassify-actions button {
+	flex: 1;
+}

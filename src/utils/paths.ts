@@ -28,6 +28,14 @@ export function sanitizeEntityName(name: string): string | null {
 	return trimmed.length > 0 ? trimmed : null;
 }
 
+export function buildFlatPersonPath(name: string, peopleFolder = 'people'): string {
+	const safe = sanitizeEntityName(name);
+	if (!safe) {
+		throw new Error('Invalid person name');
+	}
+	return `${normalizeFolder(peopleFolder)}/${safe}.md`;
+}
+
 export function buildPersonPath(name: string, peopleFolder = 'people'): string {
 	const safe = sanitizeEntityName(name);
 	if (!safe) {

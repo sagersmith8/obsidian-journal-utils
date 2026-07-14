@@ -1,7 +1,9 @@
 import { App, TFile } from 'obsidian';
 import type { JournalUtilsSettings } from '../settings';
 import type { EntityEntry, EntityKind } from '../types';
+import { composeGroupNote, splitFrontmatter } from '../utils/frontmatter';
 import {
+	buildFlatPersonPath,
 	buildGroupPath,
 	buildLocationPath,
 	buildPersonPath,
@@ -61,6 +63,38 @@ export class EntityService {
 		return isPrimaryGroupNotePath(file.path, settings.groupsFolder);
 	}
 
+	findPersonNoteByName(name: string): TFile | null {
+		const safeName = sanitizeEntityName(name);
+		if (!safeName) {
+			return null;
+		}
+
+		const settings = this.getSettings();
+		const candidatePaths = [
+			buildPersonPath(safeName, settings.peopleFolder),
+			buildFlatPersonPath(safeName, settings.peopleFolder),
+		];
+
+		for (const path of candidatePaths) {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (file instanceof TFile) {
+				return file;
+			}
+		}
+
+		const lower = safeName.toLowerCase();
+		for (const file of this.app.vault.getMarkdownFiles()) {
+			if (
+				this.isPrimaryPersonNote(file) &&
+				file.basename.toLowerCase() === lower
+			) {
+				return file;
+			}
+		}
+
+		return null;
+	}
+
 	getPeople(): EntityEntry[] {
 		const people = this.app.vault
 			.getMarkdownFiles()
@@ -100,26 +134,81 @@ export class EntityService {
 			return existing;
 		}
 
+		const members = await this.ensureMemberPersonNotes(safeName, memberNames);
+		const folderPath = path.slice(0, path.lastIndexOf('/'));
+		await ensureFolderExists(this.app, folderPath);
+
+		const content = await this.renderGroupContent(safeName, members);
+		return this.app.vault.create(path, content);
+	}
+
+	async convertPersonToGroup(name: string, memberNames: string[]): Promise<TFile> {
+		const safeName = sanitizeEntityName(name);
+		if (!safeName) {
+			throw new Error('Invalid group name');
+		}
+
+		const personFile = this.findPersonNoteByName(safeName);
+		if (!personFile) {
+			throw new Error('Person note not found');
+		}
+
+		const settings = this.getSettings();
+		const groupPath = buildGroupPath(safeName, settings.groupsFolder);
+		const existingGroup = this.app.vault.getAbstractFileByPath(groupPath);
+		if (existingGroup instanceof TFile) {
+			return existingGroup;
+		}
+
+		const members = await this.ensureMemberPersonNotes(safeName, memberNames);
+		const originalContent = await this.app.vault.read(personFile);
+		const { body } = splitFrontmatter(originalContent);
+		const content = await this.renderGroupContent(safeName, members, body);
+
+		await ensureFolderExists(this.app, groupPath.slice(0, groupPath.lastIndexOf('/')));
+		await this.app.fileManager.renameFile(personFile, groupPath);
+
+		const movedFile = this.app.vault.getAbstractFileByPath(groupPath);
+		if (!(movedFile instanceof TFile)) {
+			throw new Error('Failed to convert person note to group');
+		}
+
+		await this.app.vault.modify(movedFile, content);
+		return movedFile;
+	}
+
+	private async ensureMemberPersonNotes(
+		groupName: string,
+		memberNames: string[],
+	): Promise<string[]> {
 		const members: string[] = [];
+		const groupLower = groupName.toLowerCase();
+
 		for (const memberName of memberNames) {
 			const safeMember = sanitizeEntityName(memberName);
-			if (!safeMember) {
+			if (!safeMember || safeMember.toLowerCase() === groupLower) {
 				continue;
 			}
 			await this.createPerson(safeMember);
 			members.push(safeMember);
 		}
 
-		const folderPath = path.slice(0, path.lastIndexOf('/'));
-		await ensureFolderExists(this.app, folderPath);
+		return members;
+	}
 
-		const content = await this.templateService.render(
+	private async renderGroupContent(
+		title: string,
+		memberNames: string[],
+		preservedBody = '',
+	): Promise<string> {
+		const settings = this.getSettings();
+		const rendered = await this.templateService.render(
 			settings.groupTemplate,
-			this.templateService.buildGroupVars(safeName, members),
+			this.templateService.buildGroupVars(title, memberNames),
 			DEFAULT_GROUP_TEMPLATE,
 		);
 
-		return this.app.vault.create(path, content);
+		return composeGroupNote(rendered, preservedBody);
 	}
 
 	private async createEntityNote(kind: 'person' | 'location', name: string): Promise<TFile> {

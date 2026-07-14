@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	buildFlatPersonPath,
 	buildGroupPath,
 	isFlatPersonNotePath,
 	isPrimaryOrFlatPersonNotePath,
@@ -22,6 +23,12 @@ describe('sanitizeEntityName', () => {
 
 	it('returns null for empty result', () => {
 		expect(sanitizeEntityName('   ')).toBeNull();
+	});
+});
+
+describe('buildFlatPersonPath', () => {
+	it('builds flat person path', () => {
+		expect(buildFlatPersonPath('Matt')).toBe('people/Matt.md');
 	});
 });
 

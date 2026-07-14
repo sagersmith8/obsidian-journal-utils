@@ -7,6 +7,7 @@ import {
 	TFile,
 } from 'obsidian';
 import { GhostActionModal } from './GhostActionModal';
+import { openMemberPicker } from './MemberPickerModal';
 import type { EntityService } from '../services/EntityService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { formatWikilinkForFile } from '../utils/links';
@@ -17,7 +18,8 @@ export type PersonPickerItem =
 	| { type: 'person'; entry: EntityEntry }
 	| { type: 'group'; entry: EntityEntry }
 	| { type: 'ghost'; ghost: GhostEntry }
-	| { type: 'create'; name: string };
+	| { type: 'create'; name: string }
+	| { type: 'create-group'; name: string };
 
 export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 	constructor(
@@ -48,6 +50,9 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		if (item.type === 'create') {
 			return `Create new: ${item.name}`;
 		}
+		if (item.type === 'create-group') {
+			return `Convert to group: ${item.name}`;
+		}
 		if (item.type === 'ghost') {
 			return `${item.ghost.name} (${item.ghost.mentionCount})`;
 		}
@@ -67,7 +72,7 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		if (item.type === 'ghost') {
 			el.addClass('journal-utils-picker-ghost');
 		}
-		if (item.type === 'group') {
+		if (item.type === 'group' || item.type === 'create-group') {
 			el.addClass('journal-utils-picker-group');
 		}
 		super.renderSuggestion(suggestion, el);
@@ -119,6 +124,14 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 			suggestions.push(...ghostSuggestions);
 		}
 
+		const createGroupItem = this.buildCreateGroupItem(query);
+		if (createGroupItem) {
+			suggestions.push({
+				item: createGroupItem,
+				match: { score: 0, matches: [] },
+			});
+		}
+
 		const createItem = this.buildCreateItem(query);
 		if (createItem) {
 			suggestions.push({
@@ -136,6 +149,10 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		}
 		if (item.type === 'create') {
 			void this.createAndInsert(item.name);
+			return;
+		}
+		if (item.type === 'create-group') {
+			this.openGroupMemberPicker(item.name);
 			return;
 		}
 		if (item.type === 'ghost') {
@@ -173,6 +190,27 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		}));
 	}
 
+	private buildCreateGroupItem(query: string): PersonPickerItem | null {
+		const safeName = sanitizeEntityName(query);
+		if (!safeName) {
+			return null;
+		}
+
+		const lower = safeName.toLowerCase();
+		const personExists = this.people.some(
+			(entry) => entry.displayName.toLowerCase() === lower,
+		);
+		const groupExists = this.groups.some(
+			(entry) => entry.displayName.toLowerCase() === lower,
+		);
+
+		if (!personExists || groupExists) {
+			return null;
+		}
+
+		return { type: 'create-group', name: safeName };
+	}
+
 	private buildCreateItem(query: string): PersonPickerItem | null {
 		const safeName = sanitizeEntityName(query);
 		if (!safeName) {
@@ -190,6 +228,18 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		}
 
 		return { type: 'create', name: safeName };
+	}
+
+	private openGroupMemberPicker(groupName: string): void {
+		openMemberPicker(this.app, {
+			groupName,
+			people: this.people,
+			ghosts: this.ghosts,
+			entityService: this.entityService,
+			editor: this.editor,
+			sourcePath: this.sourcePath,
+			onDone: () => this.refocusEditor(),
+		});
 	}
 
 	private async createAndInsert(name: string): Promise<void> {

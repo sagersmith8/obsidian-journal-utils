@@ -1,4 +1,5 @@
-import { App, Editor, Modal, Notice } from 'obsidian';
+import { App, Editor, Modal, Notice, TFile } from 'obsidian';
+import { openReclassifyPersonModal } from './ReclassifyPersonModal';
 import type { EntityService } from '../services/EntityService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { formatWikilinkForFile } from '../utils/links';
@@ -77,8 +78,8 @@ export class MemberPickerModal extends Modal {
 		this.chipsEl.empty();
 		if (this.selected.size === 0) {
 			this.chipsEl.createEl('span', {
-			text: 'No members selected yet',
-			cls: 'journal-utils-member-chips-empty',
+				text: 'No members selected yet',
+				cls: 'journal-utils-member-chips-empty',
 			});
 			return;
 		}
@@ -86,7 +87,10 @@ export class MemberPickerModal extends Modal {
 		for (const name of this.selected.values()) {
 			const chip = this.chipsEl.createSpan({ cls: 'journal-utils-member-chip' });
 			chip.createSpan({ text: name });
-			const remove = chip.createEl('button', { text: '×', cls: 'journal-utils-member-chip-remove' });
+			const remove = chip.createEl('button', {
+				text: '×',
+				cls: 'journal-utils-member-chip-remove',
+			});
 			remove.addEventListener('click', (event) => {
 				event.stopPropagation();
 				this.toggleMember(name);
@@ -210,21 +214,49 @@ export class MemberPickerModal extends Modal {
 			return;
 		}
 
-		try {
-			const members = Array.from(this.selected.values());
-			const file = await this.ctx.entityService.createGroup(this.ctx.groupName, members);
-			const wikilink = formatWikilinkForFile(
-				this.app.metadataCache,
-				file,
-				this.ctx.sourcePath,
-			);
-			this.ctx.editor.replaceSelection(wikilink);
-			new Notice(`Created group ${file.basename}`);
-			this.close();
-		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Unknown error';
-			new Notice(`Could not create group: ${message}`);
+		const members = Array.from(this.selected.values());
+		const personFile = this.ctx.entityService.findPersonNoteByName(this.ctx.groupName);
+		if (personFile) {
+			openReclassifyPersonModal(this.app, {
+				groupName: this.ctx.groupName,
+				personFile,
+				onConvert: async () => {
+					try {
+						const file = await this.ctx.entityService.convertPersonToGroup(
+							this.ctx.groupName,
+							members,
+						);
+						this.finishWithLink(file, `Converted ${file.basename} to group`);
+					} catch (error) {
+						this.showError(error);
+					}
+				},
+			});
+			return;
 		}
+
+		try {
+			const file = await this.ctx.entityService.createGroup(this.ctx.groupName, members);
+			this.finishWithLink(file, `Created group ${file.basename}`);
+		} catch (error) {
+			this.showError(error);
+		}
+	}
+
+	private finishWithLink(file: TFile, message: string): void {
+		const wikilink = formatWikilinkForFile(
+			this.app.metadataCache,
+			file,
+			this.ctx.sourcePath,
+		);
+		this.ctx.editor.replaceSelection(wikilink);
+		new Notice(message);
+		this.close();
+	}
+
+	private showError(error: unknown): void {
+		const message = error instanceof Error ? error.message : 'Unknown error';
+		new Notice(`Could not create group: ${message}`);
 	}
 }
 
