@@ -152,11 +152,13 @@ export class JournalUtilsSettingTab extends PluginSettingTab {
 					{
 						name: 'Clear ignored ghosts',
 						desc: `${this.plugin.settings.ignoredLinks.length} name(s) dismissed via the picker.`,
-						action: async () => {
-							this.plugin.settings.ignoredLinks = [];
-							await this.plugin.saveSettings();
-							this.plugin.ghostService.invalidateCache();
-							this.update();
+						action: () => {
+							void (async () => {
+								this.plugin.settings.ignoredLinks = [];
+								await this.plugin.saveSettings();
+								this.plugin.ghostService.invalidateCache();
+								this.update();
+							})();
 						},
 					},
 				],
