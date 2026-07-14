@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
 	buildGroupPath,
+	isFlatPersonNotePath,
+	isPrimaryOrFlatPersonNotePath,
 	buildLocationPath,
 	buildPersonPath,
 	isPrimaryGroupNotePath,
@@ -71,5 +73,27 @@ describe('isPrimaryGroupNotePath', () => {
 describe('isPrimaryLocationNotePath', () => {
 	it('accepts canonical location notes', () => {
 		expect(isPrimaryLocationNotePath('locations/Charleston/Charleston.md')).toBe(true);
+	});
+});
+
+describe('isFlatPersonNotePath', () => {
+	it('accepts flat person notes', () => {
+		expect(isFlatPersonNotePath('people/Matt.md')).toBe(true);
+		expect(isFlatPersonNotePath('people/Michael.md')).toBe(true);
+	});
+
+	it('rejects nested paths', () => {
+		expect(isFlatPersonNotePath('people/Joy/Joy.md')).toBe(false);
+	});
+});
+
+describe('isPrimaryOrFlatPersonNotePath', () => {
+	it('accepts nested and flat primary notes', () => {
+		expect(isPrimaryOrFlatPersonNotePath('people/Joy/Joy.md')).toBe(true);
+		expect(isPrimaryOrFlatPersonNotePath('people/Matt.md')).toBe(true);
+	});
+
+	it('rejects sub-notes', () => {
+		expect(isPrimaryOrFlatPersonNotePath('people/Joy/joy gifts.md')).toBe(false);
 	});
 });

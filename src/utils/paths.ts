@@ -142,3 +142,30 @@ export function isPrimaryLocationNotePath(
 
 	return folder === basenameWithoutExt(file);
 }
+
+/** Flat person note pending migration: `people/{Name}.md` */
+export function isFlatPersonNotePath(
+	path: string,
+	peopleFolder = 'people',
+): boolean {
+	const normalized = path.replace(/\\/g, '/');
+	const people = normalizeFolder(peopleFolder);
+
+	if (!normalized.startsWith(`${people}/`)) {
+		return false;
+	}
+
+	const relative = normalized.slice(people.length + 1);
+	return relative.split('/').length === 1 && relative.endsWith('.md');
+}
+
+export function isPrimaryOrFlatPersonNotePath(
+	path: string,
+	peopleFolder = 'people',
+	groupsFolder = 'people/groups',
+): boolean {
+	return (
+		isPrimaryPersonNotePath(path, peopleFolder, groupsFolder) ||
+		isFlatPersonNotePath(path, peopleFolder)
+	);
+}
