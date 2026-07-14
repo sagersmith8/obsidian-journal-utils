@@ -27,13 +27,16 @@ BRAT installs from **GitHub release assets**. Each release attaches `manifest.js
 
 ### Option B: Obsidian Community Plugins (public listing)
 
-To appear in the official catalog (no BRAT required), a maintainer submits a PR to [obsidianmd/obsidian-releases](https://github.com/obsidianmd/obsidian-releases) adding this repo to `community-plugins.json`. Requirements:
+Submit through the [Obsidian Community directory](https://community.obsidian.md) (replaces the old `obsidian-releases` PR flow):
 
-- Public GitHub repo with MIT license
-- `manifest.json`, `versions.json`, and GitHub releases with `main.js` + `styles.css` assets
-- Plugin follows [Obsidian developer policies](https://docs.obsidian.md/Developer+policies)
+1. Sign in at [community.obsidian.md](https://community.obsidian.md) with your Obsidian account.
+2. Link your GitHub account in your profile.
+3. **Plugins → New plugin** → enter `https://github.com/sagersmith8/obsidian-journal-utils`
+4. Ensure `manifest.json` on `main` is accurate (directory reads HEAD).
+5. Publish a GitHub release whose tag matches `manifest.json` version (1.2.0+).
+6. Agree to [developer policies](https://docs.obsidian.md/Developer+policies) and submit.
 
-Until that PR is merged, use BRAT (Option A).
+Automated review runs on submit; fix any feedback, bump version, tag a new release, and resubmit.
 
 ## Mobile toolbar setup
 
