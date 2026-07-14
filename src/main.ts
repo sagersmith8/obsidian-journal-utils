@@ -1,12 +1,9 @@
 import { Platform, Plugin } from 'obsidian';
-import {
-	DEFAULT_SETTINGS,
-	type JournalUtilsSettings,
-} from './settings';
+import { mergeSettings, type JournalUtilsSettings } from './settings';
 import { JournalUtilsSettingTab } from './settingsTab';
 
 export default class JournalUtilsPlugin extends Plugin {
-	settings: JournalUtilsSettings = DEFAULT_SETTINGS;
+	settings!: JournalUtilsSettings;
 
 	async onload(): Promise<void> {
 		if (!Platform.isMobile) {
@@ -20,9 +17,7 @@ export default class JournalUtilsPlugin extends Plugin {
 	onunload(): void {}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
+		this.settings = mergeSettings(
 			(await this.loadData()) as Partial<JournalUtilsSettings> | null,
 		);
 	}
