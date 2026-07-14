@@ -137,3 +137,7 @@
 .journal-utils-picker-legacy {
 	color: var(--text-muted);
 }
+
+.journal-utils-picker-location {
+	color: var(--color-green);
+}

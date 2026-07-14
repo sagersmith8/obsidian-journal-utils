@@ -5,10 +5,13 @@ import {
 	buildGroupPath,
 	isFlatPersonNotePath,
 	isPrimaryOrFlatPersonNotePath,
+	buildFlatLocationPath,
 	buildLocationPath,
 	buildPersonPath,
 	isPrimaryGroupNotePath,
+	isFlatLocationNotePath,
 	isPrimaryLocationNotePath,
+	isPrimaryOrFlatLocationNotePath,
 	isPrimaryPersonNotePath,
 	sanitizeEntityName,
 } from '../src/utils/paths';
@@ -72,6 +75,12 @@ describe('buildGroupPath', () => {
 	});
 });
 
+describe('buildFlatLocationPath', () => {
+	it('builds flat location path', () => {
+		expect(buildFlatLocationPath('Charleston')).toBe('locations/Charleston.md');
+	});
+});
+
 describe('buildLocationPath', () => {
 	it('builds location path', () => {
 		expect(buildLocationPath('Charleston')).toBe('locations/Charleston/Charleston.md');
@@ -94,6 +103,23 @@ describe('isPrimaryGroupNotePath', () => {
 describe('isPrimaryLocationNotePath', () => {
 	it('accepts canonical location notes', () => {
 		expect(isPrimaryLocationNotePath('locations/Charleston/Charleston.md')).toBe(true);
+	});
+
+	it('rejects flat location notes', () => {
+		expect(isPrimaryLocationNotePath('locations/Charleston.md')).toBe(false);
+	});
+});
+
+describe('isFlatLocationNotePath', () => {
+	it('accepts flat location notes', () => {
+		expect(isFlatLocationNotePath('locations/Charleston.md')).toBe(true);
+	});
+});
+
+describe('isPrimaryOrFlatLocationNotePath', () => {
+	it('accepts nested and flat location notes', () => {
+		expect(isPrimaryOrFlatLocationNotePath('locations/Charleston/Charleston.md')).toBe(true);
+		expect(isPrimaryOrFlatLocationNotePath('locations/Charleston.md')).toBe(true);
 	});
 });
 

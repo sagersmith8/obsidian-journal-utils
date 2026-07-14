@@ -1,4 +1,5 @@
 import { Notice, Platform, Plugin } from 'obsidian';
+import { openLocationPicker } from './modals/LocationPickerModal';
 import { openPersonPicker } from './modals/PersonPickerModal';
 import { EntityService } from './services/EntityService';
 import { GhostService } from './services/GhostService';
@@ -102,6 +103,34 @@ export default class JournalUtilsPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: 'insert-location-link',
+			name: 'Insert location link',
+			icon: 'map-pin',
+			editorCheckCallback: (checking, editor) => {
+				if (checking) {
+					return !!editor;
+				}
+
+				const sourceFile = this.app.workspace.getActiveFile();
+				if (!sourceFile || !editor) {
+					new Notice('Open a note to insert a location link.');
+					return false;
+				}
+
+				openLocationPicker(
+					this.app,
+					this.entityService,
+					this.entityService.getLocations(),
+					this.ghostService.getGhosts(),
+					editor,
+					sourceFile,
+					(name) => this.ignoreGhost(name),
+				);
+				return true;
+			},
+		});
+
+		this.addCommand({
 			id: 'log-people-entities',
 			name: 'Log people entities (debug)',
 			callback: () => {
@@ -118,6 +147,16 @@ export default class JournalUtilsPlugin extends Plugin {
 				const groups = this.entityService.getGroups();
 				console.log('[Journal Utils] Groups:', groups);
 				new Notice(`Logged ${groups.length} groups to console`);
+			},
+		});
+
+		this.addCommand({
+			id: 'log-location-entities',
+			name: 'Log location entities (debug)',
+			callback: () => {
+				const locations = this.entityService.getLocations();
+				console.log('[Journal Utils] Locations:', locations);
+				new Notice(`Logged ${locations.length} locations to console`);
 			},
 		});
 

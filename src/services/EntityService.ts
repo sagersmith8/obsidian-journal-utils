@@ -3,12 +3,14 @@ import type { JournalUtilsSettings } from '../settings';
 import type { EntityEntry, EntityKind } from '../types';
 import { composeGroupNote, splitFrontmatter } from '../utils/frontmatter';
 import {
+	buildFlatLocationPath,
 	buildFlatPersonPath,
 	buildGroupPath,
 	buildLocationPath,
 	buildPersonPath,
 	buildVaultRootNotePath,
 	isPrimaryGroupNotePath,
+	isPrimaryOrFlatLocationNotePath,
 	isPrimaryOrFlatPersonNotePath,
 	sanitizeEntityName,
 } from '../utils/paths';
@@ -64,6 +66,18 @@ export class EntityService {
 		return isPrimaryGroupNotePath(file.path, settings.groupsFolder);
 	}
 
+	isPrimaryLocationNote(file: TFile): boolean {
+		if (file.extension !== 'md') {
+			return false;
+		}
+
+		const settings = this.getSettings();
+		return isPrimaryOrFlatLocationNotePath(
+			file.path,
+			settings.locationsFolder,
+		);
+	}
+
 	/** Find any markdown note that [[name]] would resolve to, including vault-root legacy notes. */
 	findPersonNoteByName(name: string): TFile | null {
 		const safeName = sanitizeEntityName(name);
@@ -106,6 +120,43 @@ export class EntityService {
 		return null;
 	}
 
+	findLocationNoteByName(name: string): TFile | null {
+		const safeName = sanitizeEntityName(name);
+		if (!safeName) {
+			return null;
+		}
+
+		const settings = this.getSettings();
+		const candidatePaths = [
+			buildLocationPath(safeName, settings.locationsFolder),
+			buildFlatLocationPath(safeName, settings.locationsFolder),
+		];
+
+		for (const path of candidatePaths) {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (file instanceof TFile) {
+				return file;
+			}
+		}
+
+		const resolved = this.app.metadataCache.getFirstLinkpathDest(safeName, '');
+		if (resolved instanceof TFile && this.isPrimaryLocationNote(resolved)) {
+			return resolved;
+		}
+
+		const lower = safeName.toLowerCase();
+		for (const file of this.app.vault.getMarkdownFiles()) {
+			if (
+				this.isPrimaryLocationNote(file) &&
+				file.basename.toLowerCase() === lower
+			) {
+				return file;
+			}
+		}
+
+		return null;
+	}
+
 	getEntryForFile(file: TFile, kind: EntityKind = 'person'): EntityEntry {
 		return this.toEntry(kind, file);
 	}
@@ -128,6 +179,15 @@ export class EntityService {
 		return sortEntityEntries(groups, this.getSettings().sortByBacklinks);
 	}
 
+	getLocations(): EntityEntry[] {
+		const locations = this.app.vault
+			.getMarkdownFiles()
+			.filter((file) => this.isPrimaryLocationNote(file))
+			.map((file) => this.toEntry('location', file));
+
+		return sortEntityEntries(locations, this.getSettings().sortByBacklinks);
+	}
+
 	async createPerson(name: string): Promise<TFile> {
 		const existing = this.findPersonNoteByName(name);
 		if (existing) {
@@ -137,6 +197,10 @@ export class EntityService {
 	}
 
 	async createLocation(name: string): Promise<TFile> {
+		const existing = this.findLocationNoteByName(name);
+		if (existing) {
+			return existing;
+		}
 		return this.createEntityNote('location', name);
 	}
 

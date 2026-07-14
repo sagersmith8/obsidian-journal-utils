@@ -60,6 +60,14 @@ export function buildGroupPath(name: string, groupsFolder = 'people/groups'): st
 	return `${normalizeFolder(groupsFolder)}/${safe}/${safe}.md`;
 }
 
+export function buildFlatLocationPath(name: string, locationsFolder = 'locations'): string {
+	const safe = sanitizeEntityName(name);
+	if (!safe) {
+		throw new Error('Invalid location name');
+	}
+	return `${normalizeFolder(locationsFolder)}/${safe}.md`;
+}
+
 export function buildLocationPath(name: string, locationsFolder = 'locations'): string {
 	const safe = sanitizeEntityName(name);
 	if (!safe) {
@@ -173,6 +181,31 @@ export function isFlatPersonNotePath(
 
 	const relative = normalized.slice(people.length + 1);
 	return relative.split('/').length === 1 && relative.endsWith('.md');
+}
+
+export function isFlatLocationNotePath(
+	path: string,
+	locationsFolder = 'locations',
+): boolean {
+	const normalized = path.replace(/\\/g, '/');
+	const locations = normalizeFolder(locationsFolder);
+
+	if (!normalized.startsWith(`${locations}/`)) {
+		return false;
+	}
+
+	const relative = normalized.slice(locations.length + 1);
+	return relative.split('/').length === 1 && relative.endsWith('.md');
+}
+
+export function isPrimaryOrFlatLocationNotePath(
+	path: string,
+	locationsFolder = 'locations',
+): boolean {
+	return (
+		isPrimaryLocationNotePath(path, locationsFolder) ||
+		isFlatLocationNotePath(path, locationsFolder)
+	);
 }
 
 export function isPrimaryOrFlatPersonNotePath(
