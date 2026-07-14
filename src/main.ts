@@ -1,12 +1,14 @@
 import { Notice, Platform, Plugin } from 'obsidian';
 import { openPersonPicker } from './modals/PersonPickerModal';
 import { EntityService } from './services/EntityService';
+import { TemplateService } from './services/TemplateService';
 import { mergeSettings, type JournalUtilsSettings } from './settings';
 import { JournalUtilsSettingTab } from './settingsTab';
 
 export default class JournalUtilsPlugin extends Plugin {
 	settings!: JournalUtilsSettings;
 	entityService!: EntityService;
+	templateService!: TemplateService;
 
 	async onload(): Promise<void> {
 		if (!Platform.isMobile) {
@@ -14,7 +16,12 @@ export default class JournalUtilsPlugin extends Plugin {
 		}
 
 		await this.loadSettings();
-		this.entityService = new EntityService(this.app, () => this.settings);
+		this.templateService = new TemplateService(this.app);
+		this.entityService = new EntityService(
+			this.app,
+			() => this.settings,
+			this.templateService,
+		);
 
 		this.addSettingTab(new JournalUtilsSettingTab(this.app, this));
 		this.registerEntityServiceEvents();
@@ -63,12 +70,13 @@ export default class JournalUtilsPlugin extends Plugin {
 				}
 
 				const people = this.entityService.getPeople();
-				if (people.length === 0) {
-					new Notice('No people notes found.');
-					return false;
-				}
-
-				openPersonPicker(this.app, people, editor, sourceFile);
+				openPersonPicker(
+					this.app,
+					this.entityService,
+					people,
+					editor,
+					sourceFile,
+				);
 				return true;
 			},
 		});

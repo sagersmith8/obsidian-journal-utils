@@ -1,9 +1,11 @@
 import { App, TFile } from 'obsidian';
 import type { JournalUtilsSettings } from '../settings';
 import type { EntityEntry, EntityKind } from '../types';
-import { isPrimaryOrFlatPersonNotePath } from '../utils/paths';
+import { buildPersonPath, isPrimaryOrFlatPersonNotePath, sanitizeEntityName } from '../utils/paths';
+import { ensureFolderExists } from '../utils/vault';
 import { getBacklinkCountForFile } from './backlinks';
 import { sortEntityEntries } from './entitySort';
+import { TemplateService } from './TemplateService';
 
 export class EntityService {
 	private backlinkCache = new Map<string, number>();
@@ -11,6 +13,7 @@ export class EntityService {
 	constructor(
 		private app: App,
 		private getSettings: () => JournalUtilsSettings,
+		private templateService: TemplateService,
 	) {}
 
 	invalidateCache(): void {
@@ -48,6 +51,30 @@ export class EntityService {
 			.map((file) => this.toEntry('person', file));
 
 		return sortEntityEntries(people, this.getSettings().sortByBacklinks);
+	}
+
+	async createPerson(name: string): Promise<TFile> {
+		const safeName = sanitizeEntityName(name);
+		if (!safeName) {
+			throw new Error('Invalid person name');
+		}
+
+		const settings = this.getSettings();
+		const path = buildPersonPath(safeName, settings.peopleFolder);
+		const existing = this.app.vault.getAbstractFileByPath(path);
+		if (existing instanceof TFile) {
+			return existing;
+		}
+
+		const folderPath = path.slice(0, path.lastIndexOf('/'));
+		await ensureFolderExists(this.app, folderPath);
+
+		const content = await this.templateService.render(
+			settings.personTemplate,
+			this.templateService.buildPersonVars(safeName),
+		);
+
+		return this.app.vault.create(path, content);
 	}
 
 	private toEntry(kind: EntityKind, file: TFile): EntityEntry {
