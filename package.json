@@ -13,7 +13,7 @@
 	"keywords": [],
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^22.15.17",
+		"@types/node": "^26.1.1",
 		"esbuild": "0.25.5",
 		"obsidian": "latest",
 		"typescript": "^5.8.3",
