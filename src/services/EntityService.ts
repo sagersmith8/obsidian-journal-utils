@@ -7,6 +7,7 @@ import {
 	buildGroupPath,
 	buildLocationPath,
 	buildPersonPath,
+	buildVaultRootNotePath,
 	isPrimaryGroupNotePath,
 	isPrimaryOrFlatPersonNotePath,
 	sanitizeEntityName,
@@ -63,16 +64,26 @@ export class EntityService {
 		return isPrimaryGroupNotePath(file.path, settings.groupsFolder);
 	}
 
+	/** Find any markdown note that [[name]] would resolve to, including vault-root legacy notes. */
 	findPersonNoteByName(name: string): TFile | null {
 		const safeName = sanitizeEntityName(name);
 		if (!safeName) {
 			return null;
 		}
 
+		const resolved = this.app.metadataCache.getFirstLinkpathDest(safeName, '');
+		if (resolved instanceof TFile) {
+			if (this.isPrimaryGroupNote(resolved)) {
+				return null;
+			}
+			return resolved;
+		}
+
 		const settings = this.getSettings();
 		const candidatePaths = [
 			buildPersonPath(safeName, settings.peopleFolder),
 			buildFlatPersonPath(safeName, settings.peopleFolder),
+			buildVaultRootNotePath(safeName),
 		];
 
 		for (const path of candidatePaths) {
@@ -85,7 +96,7 @@ export class EntityService {
 		const lower = safeName.toLowerCase();
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (
-				this.isPrimaryPersonNote(file) &&
+				!this.isPrimaryGroupNote(file) &&
 				file.basename.toLowerCase() === lower
 			) {
 				return file;
@@ -93,6 +104,10 @@ export class EntityService {
 		}
 
 		return null;
+	}
+
+	getEntryForFile(file: TFile, kind: EntityKind = 'person'): EntityEntry {
+		return this.toEntry(kind, file);
 	}
 
 	getPeople(): EntityEntry[] {
@@ -114,6 +129,10 @@ export class EntityService {
 	}
 
 	async createPerson(name: string): Promise<TFile> {
+		const existing = this.findPersonNoteByName(name);
+		if (existing) {
+			return existing;
+		}
 		return this.createEntityNote('person', name);
 	}
 

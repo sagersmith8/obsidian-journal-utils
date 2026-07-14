@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	buildFlatPersonPath,
+	buildVaultRootNotePath,
 	buildGroupPath,
 	isFlatPersonNotePath,
 	isPrimaryOrFlatPersonNotePath,
@@ -23,6 +24,12 @@ describe('sanitizeEntityName', () => {
 
 	it('returns null for empty result', () => {
 		expect(sanitizeEntityName('   ')).toBeNull();
+	});
+});
+
+describe('buildVaultRootNotePath', () => {
+	it('builds vault-root note path', () => {
+		expect(buildVaultRootNotePath('Ryerson')).toBe('Ryerson.md');
 	});
 });
 

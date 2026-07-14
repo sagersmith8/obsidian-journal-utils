@@ -72,6 +72,9 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		if (item.type === 'ghost') {
 			el.addClass('journal-utils-picker-ghost');
 		}
+		if (item.type === 'person' && !this.entityService.isPrimaryPersonNote(item.entry.file)) {
+			el.addClass('journal-utils-picker-legacy');
+		}
 		if (item.type === 'group' || item.type === 'create-group') {
 			el.addClass('journal-utils-picker-group');
 		}
@@ -82,6 +85,10 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		const peopleItems = this.people.map(
 			(entry): PersonPickerItem => ({ type: 'person', entry }),
 		);
+		const legacyItem = this.getLegacyPersonItem(query);
+		if (legacyItem) {
+			peopleItems.unshift(legacyItem);
+		}
 		const groupItems = this.groups.map(
 			(entry): PersonPickerItem => ({ type: 'group', entry }),
 		);
@@ -197,14 +204,15 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		}
 
 		const lower = safeName.toLowerCase();
-		const personExists = this.people.some(
-			(entry) => entry.displayName.toLowerCase() === lower,
-		);
 		const groupExists = this.groups.some(
 			(entry) => entry.displayName.toLowerCase() === lower,
 		);
+		if (groupExists) {
+			return null;
+		}
 
-		if (!personExists || groupExists) {
+		const existingNote = this.entityService.findPersonNoteByName(safeName);
+		if (!existingNote) {
 			return null;
 		}
 
@@ -221,13 +229,42 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		const exists =
 			this.people.some((entry) => entry.displayName.toLowerCase() === lower) ||
 			this.groups.some((entry) => entry.displayName.toLowerCase() === lower) ||
-			this.ghosts.some((ghost) => ghost.name.toLowerCase() === lower);
+			this.ghosts.some((ghost) => ghost.name.toLowerCase() === lower) ||
+			this.entityService.findPersonNoteByName(safeName);
 
 		if (exists) {
 			return null;
 		}
 
 		return { type: 'create', name: safeName };
+	}
+
+	private getLegacyPersonItem(query: string): PersonPickerItem | null {
+		const safeName = sanitizeEntityName(query);
+		if (!safeName) {
+			return null;
+		}
+
+		const file = this.entityService.findPersonNoteByName(safeName);
+		if (!file || this.isListedInPicker(file)) {
+			return null;
+		}
+
+		if (!file.basename.toLowerCase().includes(query.trim().toLowerCase())) {
+			return null;
+		}
+
+		return {
+			type: 'person',
+			entry: this.entityService.getEntryForFile(file),
+		};
+	}
+
+	private isListedInPicker(file: TFile): boolean {
+		return (
+			this.people.some((entry) => entry.file.path === file.path) ||
+			this.groups.some((entry) => entry.file.path === file.path)
+		);
 	}
 
 	private openGroupMemberPicker(groupName: string): void {
