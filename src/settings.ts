@@ -14,6 +14,7 @@ export interface JournalUtilsSettings {
 	setupWizardComplete: boolean;
 	migrationCompletedAt: string | null;
 	lastMigrationLog: string[];
+	mentionTrackingEnabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: JournalUtilsSettings = {
@@ -30,6 +31,7 @@ export const DEFAULT_SETTINGS: JournalUtilsSettings = {
 	setupWizardComplete: false,
 	migrationCompletedAt: null,
 	lastMigrationLog: [],
+	mentionTrackingEnabled: true,
 };
 
 export function mergeSettings(

@@ -3,6 +3,7 @@ import { openLocationPicker } from './modals/LocationPickerModal';
 import { MigrationPreviewModal } from './modals/MigrationPreviewModal';
 import { openPersonPicker } from './modals/PersonPickerModal';
 import { EntityService } from './services/EntityService';
+import { MentionTrackingService } from './services/MentionTrackingService';
 import { MigrationService } from './services/MigrationService';
 import { GhostService } from './services/GhostService';
 import { TemplateService } from './services/TemplateService';
@@ -16,6 +17,7 @@ export default class JournalUtilsPlugin extends Plugin {
 	ghostService!: GhostService;
 	migrationService!: MigrationService;
 	templateService!: TemplateService;
+	mentionTrackingService!: MentionTrackingService;
 
 	async onload(): Promise<void> {
 		if (!Platform.isMobile) {
@@ -31,6 +33,10 @@ export default class JournalUtilsPlugin extends Plugin {
 		);
 		this.ghostService = new GhostService(this.app, () => this.settings);
 		this.migrationService = new MigrationService(this.app, () => this.settings);
+		this.mentionTrackingService = new MentionTrackingService(
+			this.app,
+			() => this.settings,
+		);
 
 		this.addSettingTab(new JournalUtilsSettingTab(this.app, this));
 		this.registerCacheInvalidationEvents();
@@ -109,6 +115,7 @@ export default class JournalUtilsPlugin extends Plugin {
 				openPersonPicker(
 					this.app,
 					this.entityService,
+					this.mentionTrackingService,
 					this.entityService.getPeople(),
 					this.entityService.getGroups(),
 					this.ghostService.getGhosts(),
@@ -138,6 +145,7 @@ export default class JournalUtilsPlugin extends Plugin {
 				openLocationPicker(
 					this.app,
 					this.entityService,
+					this.mentionTrackingService,
 					this.entityService.getLocations(),
 					this.ghostService.getGhosts(),
 					editor,

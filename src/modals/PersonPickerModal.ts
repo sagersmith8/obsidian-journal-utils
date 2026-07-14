@@ -9,6 +9,7 @@ import {
 import { GhostActionModal } from './GhostActionModal';
 import { openMemberPicker } from './MemberPickerModal';
 import type { EntityService } from '../services/EntityService';
+import type { MentionTrackingService } from '../services/MentionTrackingService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { formatWikilinkForFile } from '../utils/links';
 import { sanitizeEntityName } from '../utils/paths';
@@ -29,10 +30,15 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 		private groups: EntityEntry[],
 		private ghosts: GhostEntry[],
 		private editor: Editor,
-		private sourcePath: string,
+		private sourceFile: TFile,
+		private mentionTrackingService: MentionTrackingService,
 		private ignoreGhost: (name: string) => Promise<void>,
 	) {
 		super(app);
+	}
+
+	private get sourcePath(): string {
+		return this.sourceFile.path;
 	}
 
 	getItems(): PersonPickerItem[] {
@@ -297,7 +303,16 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 			this.sourcePath,
 		);
 		this.editor.replaceSelection(wikilink);
+		void this.trackMention(file);
 		this.refocusEditor();
+	}
+
+	private async trackMention(file: TFile): Promise<void> {
+		if (this.entityService.isPrimaryGroupNote(file)) {
+			return;
+		}
+
+		await this.mentionTrackingService.trackPeople(this.sourceFile, [file]);
 	}
 
 	private refocusEditor(): void {
@@ -310,6 +325,7 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 export function openPersonPicker(
 	app: App,
 	entityService: EntityService,
+	mentionTrackingService: MentionTrackingService,
 	people: EntityEntry[],
 	groups: EntityEntry[],
 	ghosts: GhostEntry[],
@@ -324,7 +340,8 @@ export function openPersonPicker(
 		groups,
 		ghosts,
 		editor,
-		sourceFile.path,
+		sourceFile,
+		mentionTrackingService,
 		ignoreGhost,
 	).open();
 }

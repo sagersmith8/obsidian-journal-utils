@@ -8,6 +8,7 @@ import {
 } from 'obsidian';
 import { GhostActionModal } from './GhostActionModal';
 import type { EntityService } from '../services/EntityService';
+import type { MentionTrackingService } from '../services/MentionTrackingService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { formatWikilinkForFile } from '../utils/links';
 import { sanitizeEntityName } from '../utils/paths';
@@ -25,10 +26,15 @@ export class LocationPickerModal extends FuzzySuggestModal<LocationPickerItem> {
 		private locations: EntityEntry[],
 		private ghosts: GhostEntry[],
 		private editor: Editor,
-		private sourcePath: string,
+		private sourceFile: TFile,
+		private mentionTrackingService: MentionTrackingService,
 		private ignoreGhost: (name: string) => Promise<void>,
 	) {
 		super(app);
+	}
+
+	private get sourcePath(): string {
+		return this.sourceFile.path;
 	}
 
 	getItems(): LocationPickerItem[] {
@@ -226,6 +232,7 @@ export class LocationPickerModal extends FuzzySuggestModal<LocationPickerItem> {
 			this.sourcePath,
 		);
 		this.editor.replaceSelection(wikilink);
+		void this.mentionTrackingService.trackLocation(this.sourceFile, file);
 		this.refocusEditor();
 	}
 
@@ -239,6 +246,7 @@ export class LocationPickerModal extends FuzzySuggestModal<LocationPickerItem> {
 export function openLocationPicker(
 	app: App,
 	entityService: EntityService,
+	mentionTrackingService: MentionTrackingService,
 	locations: EntityEntry[],
 	ghosts: GhostEntry[],
 	editor: Editor,
@@ -251,7 +259,8 @@ export function openLocationPicker(
 		locations,
 		ghosts,
 		editor,
-		sourceFile.path,
+		sourceFile,
+		mentionTrackingService,
 		ignoreGhost,
 	).open();
 }
