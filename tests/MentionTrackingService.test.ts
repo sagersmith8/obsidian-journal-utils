@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { TFile, type App } from 'obsidian';
+import type { EntityService } from '../src/services/EntityService';
 import { MentionTrackingService } from '../src/services/MentionTrackingService';
 import { DEFAULT_SETTINGS } from '../src/settings';
 
@@ -11,7 +12,22 @@ function makeTFile(path: string): TFile {
 	return file;
 }
 
-function makeMockApp(frontmatter: Record<string, unknown>, linkDests: Record<string, string>) {
+function makeEntityService(
+	resolver: Record<string, string>,
+): Pick<EntityService, 'findPersonNoteByName'> {
+	return {
+		findPersonNoteByName: (name: string) => {
+			const path = resolver[name];
+			return path ? makeTFile(path) : null;
+		},
+	};
+}
+
+function makeMockApp(
+	frontmatter: Record<string, unknown>,
+	linkDests: Record<string, string>,
+	fileCache: Record<string, Record<string, unknown>> = {},
+) {
 	const processFrontMatter = vi.fn(
 		async (_file: TFile, fn: (frontmatter: Record<string, unknown>) => void) => {
 			fn(frontmatter);
@@ -24,6 +40,7 @@ function makeMockApp(frontmatter: Record<string, unknown>, linkDests: Record<str
 				const path = linkDests[linkText];
 				return path ? makeTFile(path) : null;
 			},
+			getFileCache: (file: TFile) => fileCache[file.path] ?? null,
 			fileToLinktext: (file: TFile) => file.basename,
 		},
 		vault: {
@@ -37,10 +54,22 @@ function makeMockApp(frontmatter: Record<string, unknown>, linkDests: Record<str
 	return { app, processFrontMatter, frontmatter };
 }
 
+function makeService(
+	app: App,
+	entityResolver: Record<string, string>,
+	settings = DEFAULT_SETTINGS,
+): MentionTrackingService {
+	return new MentionTrackingService(
+		app,
+		makeEntityService(entityResolver) as EntityService,
+		() => settings,
+	);
+}
+
 describe('MentionTrackingService', () => {
 	it('creates people list on first insert', async () => {
 		const { app, frontmatter } = makeMockApp({}, { Joy: 'people/Joy/Joy.md' });
-		const service = new MentionTrackingService(app, () => DEFAULT_SETTINGS);
+		const service = makeService(app, { Joy: 'people/Joy/Joy.md' });
 		const source = makeTFile('journal/2026-07-12.md');
 		const joy = makeTFile('people/Joy/Joy.md');
 
@@ -55,7 +84,7 @@ describe('MentionTrackingService', () => {
 			{ people: ['[[Joy]]'] },
 			{ Joy: 'people/Joy/Joy.md' },
 		);
-		const service = new MentionTrackingService(app, () => DEFAULT_SETTINGS);
+		const service = makeService(app, { Joy: 'people/Joy/Joy.md' });
 		const source = makeTFile('journal/2026-07-12.md');
 		const joy = makeTFile('people/Joy/Joy.md');
 
@@ -68,10 +97,11 @@ describe('MentionTrackingService', () => {
 
 	it('skips processFrontMatter when mention tracking is disabled', async () => {
 		const { app, processFrontMatter } = makeMockApp({}, { Joy: 'people/Joy/Joy.md' });
-		const service = new MentionTrackingService(app, () => ({
-			...DEFAULT_SETTINGS,
-			mentionTrackingEnabled: false,
-		}));
+		const service = makeService(
+			app,
+			{ Joy: 'people/Joy/Joy.md' },
+			{ ...DEFAULT_SETTINGS, mentionTrackingEnabled: false },
+		);
 		const source = makeTFile('journal/2026-07-12.md');
 		const joy = makeTFile('people/Joy/Joy.md');
 
@@ -86,7 +116,7 @@ describe('MentionTrackingService', () => {
 			{ people: null },
 			{ Matt: 'people/Matt/Matt.md' },
 		);
-		const service = new MentionTrackingService(app, () => DEFAULT_SETTINGS);
+		const service = makeService(app, { Matt: 'people/Matt/Matt.md' });
 		const source = makeTFile('journal/2026-07-12.md');
 		const matt = makeTFile('people/Matt/Matt.md');
 
@@ -101,7 +131,7 @@ describe('MentionTrackingService', () => {
 			{},
 			{ Charleston: 'locations/Charleston/Charleston.md' },
 		);
-		const service = new MentionTrackingService(app, () => DEFAULT_SETTINGS);
+		const service = makeService(app, {});
 		const source = makeTFile('journal/2026-07-12.md');
 		const charleston = makeTFile('locations/Charleston/Charleston.md');
 
@@ -109,5 +139,76 @@ describe('MentionTrackingService', () => {
 
 		expect(result).toEqual({ changed: true, addedLabels: ['Charleston'] });
 		expect(frontmatter.locations).toEqual(['[[Charleston]]']);
+	});
+
+	it('expands group members from knownMembers into people', async () => {
+		const { app, frontmatter } = makeMockApp(
+			{},
+			{
+				'Steve Ryerson': 'people/Steve Ryerson/Steve Ryerson.md',
+				'Annette Ryerson': 'people/Annette Ryerson/Annette Ryerson.md',
+			},
+		);
+		const service = makeService(app, {
+			'Steve Ryerson': 'people/Steve Ryerson/Steve Ryerson.md',
+			'Annette Ryerson': 'people/Annette Ryerson/Annette Ryerson.md',
+		});
+		const source = makeTFile('journal/2026-07-12.md');
+		const group = makeTFile('people/groups/The Ryersons/The Ryersons.md');
+
+		const result = await service.trackGroupInsert(source, group, [
+			'Steve Ryerson',
+			'Annette Ryerson',
+		]);
+
+		expect(result.changed).toBe(true);
+		expect(frontmatter.people).toEqual([
+			'[[Steve Ryerson]]',
+			'[[Annette Ryerson]]',
+		]);
+	});
+
+	it('expands group members from frontmatter cache when knownMembers omitted', async () => {
+		const groupPath = 'people/groups/The Ryersons/The Ryersons.md';
+		const { app, frontmatter } = makeMockApp(
+			{},
+			{
+				'Steve Ryerson': 'people/Steve Ryerson/Steve Ryerson.md',
+			},
+			{
+				[groupPath]: {
+					frontmatter: {
+						members: ['[[Steve Ryerson]]'],
+					},
+				},
+			},
+		);
+		const service = makeService(app, {
+			'Steve Ryerson': 'people/Steve Ryerson/Steve Ryerson.md',
+		});
+		const source = makeTFile('journal/2026-07-12.md');
+		const group = makeTFile(groupPath);
+
+		const result = await service.trackGroupInsert(source, group);
+
+		expect(result.changed).toBe(true);
+		expect(frontmatter.people).toEqual(['[[Steve Ryerson]]']);
+	});
+
+	it('dedupes group members already listed in people', async () => {
+		const { app, frontmatter } = makeMockApp(
+			{ people: ['[[Steve Ryerson]]'] },
+			{ 'Steve Ryerson': 'people/Steve Ryerson/Steve Ryerson.md' },
+		);
+		const service = makeService(app, {
+			'Steve Ryerson': 'people/Steve Ryerson/Steve Ryerson.md',
+		});
+		const source = makeTFile('journal/2026-07-12.md');
+		const group = makeTFile('people/groups/The Ryersons/The Ryersons.md');
+
+		const result = await service.trackGroupInsert(source, group, ['Steve Ryerson']);
+
+		expect(result).toEqual({ changed: false, addedLabels: [] });
+		expect(frontmatter.people).toEqual(['[[Steve Ryerson]]']);
 	});
 });

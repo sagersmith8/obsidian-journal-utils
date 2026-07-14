@@ -1,6 +1,7 @@
 import { App, Editor, Modal, Notice, TFile } from 'obsidian';
 import { openMemberPicker } from './MemberPickerModal';
 import type { EntityService } from '../services/EntityService';
+import type { MentionTrackingService } from '../services/MentionTrackingService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { buildWikilink, formatWikilinkForFile } from '../utils/links';
 
@@ -9,7 +10,8 @@ export interface GhostActionContext {
 	people: EntityEntry[];
 	ghosts: GhostEntry[];
 	editor: Editor;
-	sourcePath: string;
+	sourceFile: TFile;
+	mentionTrackingService: MentionTrackingService;
 	ignoreGhost: (name: string) => Promise<void>;
 }
 
@@ -64,7 +66,8 @@ export class GhostActionModal extends Modal {
 			ghosts: this.ctx.ghosts,
 			entityService: this.ctx.entityService,
 			editor: this.ctx.editor,
-			sourcePath: this.ctx.sourcePath,
+			sourceFile: this.ctx.sourceFile,
+			mentionTrackingService: this.ctx.mentionTrackingService,
 			onDone: () => this.refocusEditor(),
 		});
 	}
@@ -83,7 +86,7 @@ export class GhostActionModal extends Modal {
 			const wikilink = formatWikilinkForFile(
 				this.app.metadataCache,
 				file,
-				this.ctx.sourcePath,
+				this.ctx.sourceFile.path,
 			);
 			this.ctx.editor.replaceSelection(wikilink);
 			new Notice(`Created ${file.basename}`);

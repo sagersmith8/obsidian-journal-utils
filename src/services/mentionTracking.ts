@@ -83,3 +83,10 @@ export function collectNewEntries(
 
 	return newEntries;
 }
+
+/** Extract display names from a group note members frontmatter value. */
+export function extractMemberNames(raw: unknown): string[] {
+	return normalizeListProperty(raw)
+		.map((entry) => parseWikilinkString(entry))
+		.filter((name): name is string => Boolean(name));
+}

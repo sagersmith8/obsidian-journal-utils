@@ -1,7 +1,13 @@
 import { App, TFile } from 'obsidian';
 import type { JournalUtilsSettings } from '../settings';
 import { formatWikilinkForFile } from '../utils/links';
-import { collectNewEntries, normalizeListProperty, parseWikilinkString } from './mentionTracking';
+import type { EntityService } from './EntityService';
+import {
+	collectNewEntries,
+	extractMemberNames,
+	normalizeListProperty,
+	parseWikilinkString,
+} from './mentionTracking';
 
 export interface MentionTrackResult {
 	changed: boolean;
@@ -13,6 +19,7 @@ type MentionListKey = 'people' | 'locations';
 export class MentionTrackingService {
 	constructor(
 		private app: App,
+		private entityService: EntityService,
 		private getSettings: () => JournalUtilsSettings,
 	) {}
 
@@ -22,6 +29,33 @@ export class MentionTrackingService {
 
 	async trackLocation(sourceFile: TFile, target: TFile): Promise<MentionTrackResult> {
 		return this.trackList(sourceFile, 'locations', [target]);
+	}
+
+	async trackGroupInsert(
+		sourceFile: TFile,
+		groupFile: TFile,
+		knownMembers?: string[],
+	): Promise<MentionTrackResult> {
+		if (!this.isEnabled()) {
+			return { changed: false, addedLabels: [] };
+		}
+
+		const memberNames =
+			knownMembers && knownMembers.length > 0
+				? knownMembers
+				: extractMemberNames(
+						this.app.metadataCache.getFileCache(groupFile)?.frontmatter?.members,
+					);
+
+		const personFiles: TFile[] = [];
+		for (const name of memberNames) {
+			const person = this.entityService.findPersonNoteByName(name);
+			if (person) {
+				personFiles.push(person);
+			}
+		}
+
+		return this.trackPeople(sourceFile, personFiles);
 	}
 
 	private isEnabled(): boolean {

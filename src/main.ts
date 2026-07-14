@@ -35,6 +35,7 @@ export default class JournalUtilsPlugin extends Plugin {
 		this.migrationService = new MigrationService(this.app, () => this.settings);
 		this.mentionTrackingService = new MentionTrackingService(
 			this.app,
+			this.entityService,
 			() => this.settings,
 		);
 

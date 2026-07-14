@@ -1,6 +1,7 @@
 import { App, Editor, Modal, Notice, TFile } from 'obsidian';
 import { openReclassifyPersonModal } from './ReclassifyPersonModal';
 import type { EntityService } from '../services/EntityService';
+import type { MentionTrackingService } from '../services/MentionTrackingService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { formatWikilinkForFile } from '../utils/links';
 import { sanitizeEntityName } from '../utils/paths';
@@ -16,7 +17,8 @@ export interface MemberPickerContext {
 	ghosts: GhostEntry[];
 	entityService: EntityService;
 	editor: Editor;
-	sourcePath: string;
+	sourceFile: TFile;
+	mentionTrackingService: MentionTrackingService;
 	onDone?: () => void;
 }
 
@@ -226,7 +228,7 @@ export class MemberPickerModal extends Modal {
 							this.ctx.groupName,
 							members,
 						);
-						this.finishWithLink(file, `Converted ${file.basename} to group`);
+						this.finishWithLink(file, `Converted ${file.basename} to group`, members);
 					} catch (error) {
 						this.showError(error);
 					}
@@ -237,19 +239,24 @@ export class MemberPickerModal extends Modal {
 
 		try {
 			const file = await this.ctx.entityService.createGroup(this.ctx.groupName, members);
-			this.finishWithLink(file, `Created group ${file.basename}`);
+			this.finishWithLink(file, `Created group ${file.basename}`, members);
 		} catch (error) {
 			this.showError(error);
 		}
 	}
 
-	private finishWithLink(file: TFile, message: string): void {
+	private finishWithLink(file: TFile, message: string, members: string[]): void {
 		const wikilink = formatWikilinkForFile(
 			this.app.metadataCache,
 			file,
-			this.ctx.sourcePath,
+			this.ctx.sourceFile.path,
 		);
 		this.ctx.editor.replaceSelection(wikilink);
+		void this.ctx.mentionTrackingService.trackGroupInsert(
+			this.ctx.sourceFile,
+			file,
+			members,
+		);
 		new Notice(message);
 		this.close();
 	}

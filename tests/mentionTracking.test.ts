@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	collectNewEntries,
+	extractMemberNames,
 	entryResolvesToPath,
 	normalizeListProperty,
 	parseWikilinkString,
@@ -63,6 +64,19 @@ describe('entryResolvesToPath', () => {
 		expect(
 			entryResolvesToPath('[[Unknown]]', 'journal/2026-07-12.md', resolver),
 		).toBeNull();
+	});
+});
+
+describe('extractMemberNames', () => {
+	it('parses wikilink and plain member entries', () => {
+		expect(
+			extractMemberNames(['[[Steve Ryerson]]', 'Annette Ryerson']),
+		).toEqual(['Steve Ryerson', 'Annette Ryerson']);
+	});
+
+	it('returns empty array for invalid values', () => {
+		expect(extractMemberNames(null)).toEqual([]);
+		expect(extractMemberNames(['', '[[]]'])).toEqual([]);
 	});
 });
 

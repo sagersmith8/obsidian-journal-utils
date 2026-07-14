@@ -141,7 +141,8 @@ export class LocationPickerModal extends FuzzySuggestModal<LocationPickerItem> {
 				people: this.entityService.getPeople(),
 				ghosts: this.ghosts,
 				editor: this.editor,
-				sourcePath: this.sourcePath,
+				sourceFile: this.sourceFile,
+				mentionTrackingService: this.mentionTrackingService,
 				ignoreGhost: this.ignoreGhost,
 			}).open();
 			return;

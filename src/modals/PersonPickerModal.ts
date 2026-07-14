@@ -174,7 +174,8 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 				people: this.people,
 				ghosts: this.ghosts,
 				editor: this.editor,
-				sourcePath: this.sourcePath,
+				sourceFile: this.sourceFile,
+				mentionTrackingService: this.mentionTrackingService,
 				ignoreGhost: this.ignoreGhost,
 			}).open();
 			return;
@@ -280,7 +281,8 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 			ghosts: this.ghosts,
 			entityService: this.entityService,
 			editor: this.editor,
-			sourcePath: this.sourcePath,
+			sourceFile: this.sourceFile,
+			mentionTrackingService: this.mentionTrackingService,
 			onDone: () => this.refocusEditor(),
 		});
 	}
@@ -309,6 +311,7 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 
 	private async trackMention(file: TFile): Promise<void> {
 		if (this.entityService.isPrimaryGroupNote(file)) {
+			await this.mentionTrackingService.trackGroupInsert(this.sourceFile, file);
 			return;
 		}
 
