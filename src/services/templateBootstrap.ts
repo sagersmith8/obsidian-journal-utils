@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import { App } from 'obsidian';
 import type { JournalUtilsSettings } from '../settings';
 import {
 	DEFAULT_GROUP_TEMPLATE,

@@ -99,29 +99,32 @@ export class MentionTrackingService {
 		let result: MentionTrackResult = { changed: false, addedLabels: [] };
 
 		try {
-			await this.app.fileManager.processFrontMatter(sourceFile, (frontmatter) => {
-				const existing = normalizeListProperty(frontmatter[key]);
-				const candidatePaths = candidates.map((file) => file.path);
-				const newEntries = collectNewEntries(
-					existing,
-					candidatePaths,
-					sourcePath,
-					resolveLink,
-					formatEntry,
-				);
+			await this.app.fileManager.processFrontMatter(
+				sourceFile,
+				(frontmatter: Record<string, unknown>) => {
+					const existing = normalizeListProperty(frontmatter[key]);
+					const candidatePaths = candidates.map((file) => file.path);
+					const newEntries = collectNewEntries(
+						existing,
+						candidatePaths,
+						sourcePath,
+						resolveLink,
+						formatEntry,
+					);
 
-				if (newEntries.length === 0) {
-					return;
-				}
+					if (newEntries.length === 0) {
+						return;
+					}
 
-				frontmatter[key] = [...existing, ...newEntries];
-				result = {
-					changed: true,
-					addedLabels: newEntries.map(
-						(entry) => parseWikilinkString(entry) ?? entry,
-					),
-				};
-			});
+					frontmatter[key] = [...existing, ...newEntries];
+					result = {
+						changed: true,
+						addedLabels: newEntries.map(
+							(entry) => parseWikilinkString(entry) ?? entry,
+						),
+					};
+				},
+			);
 		} catch (error) {
 			console.error('[Journal Utils] Mention tracking failed:', error);
 			return {

@@ -5,6 +5,10 @@ import {
 	aggregateUnresolvedLinks,
 	buildGhostEntries,
 } from './ghostAggregation';
+import {
+	listMarkdownFilesInFolders,
+	listVaultRootMarkdownFiles,
+} from '../utils/vault';
 
 export class GhostService {
 	private cachedGhosts: GhostEntry[] | null = null;
@@ -39,9 +43,19 @@ export class GhostService {
 	}
 
 	private collectExistingLinkNames(): Set<string> {
+		const settings = this.getSettings();
 		const names = new Set<string>();
 
-		for (const file of this.app.vault.getMarkdownFiles()) {
+		const entityFiles = [
+			...listMarkdownFilesInFolders(this.app, [
+				settings.peopleFolder,
+				settings.groupsFolder,
+				settings.locationsFolder,
+			]),
+			...listVaultRootMarkdownFiles(this.app),
+		];
+
+		for (const file of entityFiles) {
 			names.add(file.basename.toLowerCase());
 			names.add(file.path.toLowerCase());
 

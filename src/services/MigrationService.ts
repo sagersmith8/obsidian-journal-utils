@@ -1,6 +1,6 @@
-import { App, Notice, TFile } from 'obsidian';
+import { App, TFile } from 'obsidian';
 import type { JournalUtilsSettings } from '../settings';
-import { ensureFolderExists } from '../utils/vault';
+import { ensureFolderExists, listMarkdownFilesInFolder } from '../utils/vault';
 import {
 	buildMergedNoteContent,
 	buildMigrationPlan,
@@ -26,8 +26,7 @@ export class MigrationService {
 
 	buildPlan(): MigrationPlan {
 		const settings = this.getSettings();
-		const filePaths = this.app.vault
-			.getMarkdownFiles()
+		const filePaths = listMarkdownFilesInFolder(this.app, settings.peopleFolder)
 			.filter((file) =>
 				isMigratablePeoplePath(
 					file.path,
@@ -110,7 +109,7 @@ export class MigrationService {
 		for (const subNote of person.subNotes) {
 			const subFile = this.app.vault.getAbstractFileByPath(subNote.path);
 			if (subFile instanceof TFile) {
-				await this.app.vault.trash(subFile, true);
+				await this.app.fileManager.trashFile(subFile);
 				result.deleted += 1;
 				result.log.push(`Removed merged sub-note ${subNote.path}`);
 			}

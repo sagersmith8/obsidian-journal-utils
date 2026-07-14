@@ -1,7 +1,5 @@
 import { App, TFile } from 'obsidian';
 import {
-	DEFAULT_GROUP_TEMPLATE,
-	DEFAULT_LOCATION_TEMPLATE,
 	DEFAULT_PERSON_TEMPLATE,
 	formatMembersYamlBlock,
 	slugifyTitle,

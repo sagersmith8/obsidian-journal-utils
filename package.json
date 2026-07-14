@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-journal-utils",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "Obsidian mobile plugin for people, group, and location wikilinks",
 	"main": "main.js",
 	"type": "module",

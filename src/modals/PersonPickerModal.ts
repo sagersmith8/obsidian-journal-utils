@@ -319,7 +319,7 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 	}
 
 	private refocusEditor(): void {
-		requestAnimationFrame(() => {
+		window.requestAnimationFrame(() => {
 			this.editor.focus();
 		});
 	}

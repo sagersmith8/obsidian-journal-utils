@@ -14,7 +14,7 @@ import {
 	isPrimaryOrFlatPersonNotePath,
 	sanitizeEntityName,
 } from '../utils/paths';
-import { ensureFolderExists } from '../utils/vault';
+import { ensureFolderExists, listMarkdownFilesInFolder, listVaultRootMarkdownFiles } from '../utils/vault';
 import { getBacklinkCountForFile } from './backlinks';
 import { sortEntityEntries } from './entitySort';
 import { DEFAULT_GROUP_TEMPLATE, DEFAULT_LOCATION_TEMPLATE } from './templateVars';
@@ -108,7 +108,11 @@ export class EntityService {
 		}
 
 		const lower = safeName.toLowerCase();
-		for (const file of this.app.vault.getMarkdownFiles()) {
+		const searchFiles = [
+			...listMarkdownFilesInFolder(this.app, settings.peopleFolder),
+			...listVaultRootMarkdownFiles(this.app),
+		];
+		for (const file of searchFiles) {
 			if (
 				!this.isPrimaryGroupNote(file) &&
 				file.basename.toLowerCase() === lower
@@ -145,7 +149,10 @@ export class EntityService {
 		}
 
 		const lower = safeName.toLowerCase();
-		for (const file of this.app.vault.getMarkdownFiles()) {
+		for (const file of listMarkdownFilesInFolder(
+			this.app,
+			settings.locationsFolder,
+		)) {
 			if (
 				this.isPrimaryLocationNote(file) &&
 				file.basename.toLowerCase() === lower
@@ -162,30 +169,33 @@ export class EntityService {
 	}
 
 	getPeople(): EntityEntry[] {
-		const people = this.app.vault
-			.getMarkdownFiles()
+		const settings = this.getSettings();
+		const people = listMarkdownFilesInFolder(this.app, settings.peopleFolder)
 			.filter((file) => this.isPrimaryPersonNote(file))
 			.map((file) => this.toEntry('person', file));
 
-		return sortEntityEntries(people, this.getSettings().sortByBacklinks);
+		return sortEntityEntries(people, settings.sortByBacklinks);
 	}
 
 	getGroups(): EntityEntry[] {
-		const groups = this.app.vault
-			.getMarkdownFiles()
+		const settings = this.getSettings();
+		const groups = listMarkdownFilesInFolder(this.app, settings.groupsFolder)
 			.filter((file) => this.isPrimaryGroupNote(file))
 			.map((file) => this.toEntry('group', file));
 
-		return sortEntityEntries(groups, this.getSettings().sortByBacklinks);
+		return sortEntityEntries(groups, settings.sortByBacklinks);
 	}
 
 	getLocations(): EntityEntry[] {
-		const locations = this.app.vault
-			.getMarkdownFiles()
+		const settings = this.getSettings();
+		const locations = listMarkdownFilesInFolder(
+			this.app,
+			settings.locationsFolder,
+		)
 			.filter((file) => this.isPrimaryLocationNote(file))
 			.map((file) => this.toEntry('location', file));
 
-		return sortEntityEntries(locations, this.getSettings().sortByBacklinks);
+		return sortEntityEntries(locations, settings.sortByBacklinks);
 	}
 
 	async createPerson(name: string): Promise<TFile> {

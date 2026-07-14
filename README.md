@@ -38,6 +38,13 @@ Submit through the [Obsidian Community directory](https://community.obsidian.md)
 
 Automated review runs on submit; fix any feedback, bump version, tag a new release, and resubmit.
 
+Release assets (`main.js`, `styles.css`) include [GitHub artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) so you can verify they were built from this repository:
+
+```bash
+gh attestation verify main.js -R sagersmith8/obsidian-journal-utils
+gh attestation verify styles.css -R sagersmith8/obsidian-journal-utils
+```
+
 ## Mobile toolbar setup
 
 1. Open a note on your phone.
@@ -104,6 +111,20 @@ Journal section headings (Gratitude, Goals, etc.) are blocklisted by default. Ta
 
 Run **Migrate people folder** once after committing your vault. Review the preview before confirming. Moves flat files like `people/Graham.md` → `people/Graham/Graham.md` and merges sub-notes into primary files.
 
+## Data access
+
+Journal Utils reads and writes notes only in your configured folders (`people`, `people/groups`, `locations`) plus vault-root legacy person notes. It does **not** enumerate your entire vault.
+
+| Access | Purpose |
+|--------|---------|
+| Entity folders | List people, groups, and locations for pickers |
+| Vault root `.md` files | Resolve legacy flat person notes (e.g. `Joy.md`) |
+| Active note | Insert wikilinks and update `people:` / `locations:` frontmatter |
+| `metadataCache.unresolvedLinks` | Surface ghost mentions (no full-vault scan) |
+| Migration command | Scan only the people folder for notes to consolidate |
+
+All file access stays on your device; nothing is sent to external servers.
+
 ## Development
 
 ```bash
@@ -132,7 +153,7 @@ git tag X.Y.Z
 git push origin X.Y.Z
 ```
 
-The release workflow verifies `manifest.json` version equals the tag, runs tests, builds, and attaches `main.js`, `manifest.json`, and `styles.css` to the GitHub release.
+The release workflow verifies `manifest.json` version equals the tag, runs tests, builds, generates [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) for `main.js` and `styles.css`, and attaches `main.js`, `manifest.json`, and `styles.css` to the GitHub release.
 
 CI runs on every push/PR to `main` (test + build).
 

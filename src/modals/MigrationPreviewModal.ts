@@ -84,9 +84,9 @@ export class MigrationPreviewModal extends Modal {
 	}
 
 	private async runMigration(): Promise<void> {
-		const button = this.contentEl.querySelector(
+		const button = this.contentEl.querySelector<HTMLButtonElement>(
 			'.journal-utils-migration-actions .mod-cta',
-		) as HTMLButtonElement | null;
+		);
 		if (button) {
 			button.disabled = true;
 			button.textContent = 'Migrating…';

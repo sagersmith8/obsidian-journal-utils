@@ -244,7 +244,7 @@ export class LocationPickerModal extends FuzzySuggestModal<LocationPickerItem> {
 	}
 
 	private refocusEditor(): void {
-		requestAnimationFrame(() => {
+		window.requestAnimationFrame(() => {
 			this.editor.focus();
 		});
 	}

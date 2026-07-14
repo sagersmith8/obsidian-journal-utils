@@ -127,7 +127,7 @@ export class GhostActionModal extends Modal {
 	}
 
 	private refocusEditor(): void {
-		requestAnimationFrame(() => {
+		window.requestAnimationFrame(() => {
 			this.ctx.editor.focus();
 		});
 	}
