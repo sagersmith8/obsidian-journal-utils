@@ -46,6 +46,21 @@ export class JournalUtilsSettingTab extends PluginSettingTab {
 			'Vault path used when creating a location note.',
 		);
 
+		containerEl.createEl('h3', { text: 'Mention tracking' });
+		new Setting(containerEl)
+			.setName('Update people/locations frontmatter on insert')
+			.setDesc(
+				'Append deduplicated people and locations lists when using insert picker commands. Does not scan manually typed links.',
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.mentionTrackingEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.mentionTrackingEnabled = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
 		containerEl.createEl('h3', { text: 'Picker behavior' });
 		new Setting(containerEl)
 			.setName('Sort by backlinks')
