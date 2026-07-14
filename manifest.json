@@ -1,9 +1,9 @@
 {
 	"id": "journal-utils",
 	"name": "Journal Utils",
-	"version": "0.10.0",
+	"version": "1.0.0",
 	"minAppVersion": "1.5.0",
-	"description": "Mobile toolbar commands for people, group, and location wikilinks while journaling.",
+	"description": "Mobile toolbar commands for people, group, and location wikilinks while journaling in Obsidian.",
 	"author": "sagersmith8",
 	"authorUrl": "https://github.com/sagersmith8",
 	"isDesktopOnly": false

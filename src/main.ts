@@ -6,6 +6,7 @@ import { EntityService } from './services/EntityService';
 import { MigrationService } from './services/MigrationService';
 import { GhostService } from './services/GhostService';
 import { TemplateService } from './services/TemplateService';
+import { ensureDefaultTemplates } from './services/templateBootstrap';
 import { mergeSettings, type JournalUtilsSettings } from './settings';
 import { JournalUtilsSettingTab } from './settingsTab';
 
@@ -34,6 +35,7 @@ export default class JournalUtilsPlugin extends Plugin {
 		this.addSettingTab(new JournalUtilsSettingTab(this.app, this));
 		this.registerCacheInvalidationEvents();
 		this.registerCommands();
+		void this.bootstrapTemplates();
 	}
 
 	onunload(): void {}
@@ -64,6 +66,18 @@ export default class JournalUtilsPlugin extends Plugin {
 		}
 
 		this.ghostService.invalidateCache();
+	}
+
+	private async bootstrapTemplates(): Promise<void> {
+		try {
+			const created = await ensureDefaultTemplates(this.app, this.settings);
+			if (created.length > 0) {
+				new Notice(`Journal Utils created ${created.length} template file(s).`);
+			}
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Unknown error';
+			console.error('[Journal Utils] Template bootstrap failed:', message);
+		}
 	}
 
 	private registerCacheInvalidationEvents(): void {
@@ -149,43 +163,10 @@ export default class JournalUtilsPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'log-people-entities',
-			name: 'Log people entities (debug)',
-			callback: () => {
-				const people = this.entityService.getPeople();
-				console.log('[Journal Utils] People:', people);
-				new Notice(`Logged ${people.length} people to console`);
-			},
-		});
-
-		this.addCommand({
-			id: 'log-groups-entities',
-			name: 'Log group entities (debug)',
-			callback: () => {
-				const groups = this.entityService.getGroups();
-				console.log('[Journal Utils] Groups:', groups);
-				new Notice(`Logged ${groups.length} groups to console`);
-			},
-		});
-
-		this.addCommand({
-			id: 'log-location-entities',
-			name: 'Log location entities (debug)',
-			callback: () => {
-				const locations = this.entityService.getLocations();
-				console.log('[Journal Utils] Locations:', locations);
-				new Notice(`Logged ${locations.length} locations to console`);
-			},
-		});
-
-		this.addCommand({
-			id: 'log-ghost-entities',
-			name: 'Log ghost mentions (debug)',
-			callback: () => {
-				const ghosts = this.ghostService.getGhosts();
-				console.log('[Journal Utils] Ghosts:', ghosts);
-				new Notice(`Logged ${ghosts.length} ghosts to console`);
-			},
+			id: 'ensure-default-templates',
+			name: 'Ensure default templates in vault',
+			icon: 'file-plus',
+			callback: () => void this.bootstrapTemplates(),
 		});
 	}
 }

@@ -19,6 +19,11 @@ export class JournalUtilsSettingTab extends PluginSettingTab {
 			text: 'Mobile-only plugin for people, group, and location wikilinks while journaling.',
 		});
 
+		containerEl.createEl('h3', { text: 'Mobile toolbar' });
+		containerEl.createEl('p', {
+			text: 'Settings → Mobile → Manage toolbar options. Add Insert person link and Insert location link.',
+		});
+
 		containerEl.createEl('h3', { text: 'Folders' });
 		this.addFolderSetting('People folder', 'peopleFolder', 'Primary person notes.');
 		this.addFolderSetting('Groups folder', 'groupsFolder', 'Group notes with members.');
@@ -50,20 +55,6 @@ export class JournalUtilsSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.sortByBacklinks)
 					.onChange(async (value) => {
 						this.plugin.settings.sortByBacklinks = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		new Setting(containerEl)
-			.setName('Vault-local photo decorations')
-			.setDesc(
-				'Show avatar circles for vault-local photo paths in the editor (HTTP photos use Supercharged Links).',
-			)
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.avatarDecorationEnabled)
-					.onChange(async (value) => {
-						this.plugin.settings.avatarDecorationEnabled = value;
 						await this.plugin.saveSettings();
 					}),
 			);
@@ -102,6 +93,7 @@ export class JournalUtilsSettingTab extends PluginSettingTab {
 				button.setButtonText('Clear').setWarning().onClick(async () => {
 					this.plugin.settings.ignoredLinks = [];
 					await this.plugin.saveSettings();
+					this.plugin.ghostService.invalidateCache();
 					this.display();
 				}),
 			);
