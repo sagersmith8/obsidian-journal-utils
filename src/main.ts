@@ -1,4 +1,5 @@
 import { Notice, Platform, Plugin } from 'obsidian';
+import { openPersonPicker } from './modals/PersonPickerModal';
 import { EntityService } from './services/EntityService';
 import { mergeSettings, type JournalUtilsSettings } from './settings';
 import { JournalUtilsSettingTab } from './settingsTab';
@@ -17,7 +18,7 @@ export default class JournalUtilsPlugin extends Plugin {
 
 		this.addSettingTab(new JournalUtilsSettingTab(this.app, this));
 		this.registerEntityServiceEvents();
-		this.registerDebugCommands();
+		this.registerCommands();
 	}
 
 	onunload(): void {}
@@ -45,7 +46,33 @@ export default class JournalUtilsPlugin extends Plugin {
 		);
 	}
 
-	private registerDebugCommands(): void {
+	private registerCommands(): void {
+		this.addCommand({
+			id: 'insert-person-link',
+			name: 'Insert person link',
+			icon: 'user',
+			editorCheckCallback: (checking, editor) => {
+				if (checking) {
+					return !!editor;
+				}
+
+				const sourceFile = this.app.workspace.getActiveFile();
+				if (!sourceFile || !editor) {
+					new Notice('Open a note to insert a person link.');
+					return false;
+				}
+
+				const people = this.entityService.getPeople();
+				if (people.length === 0) {
+					new Notice('No people notes found.');
+					return false;
+				}
+
+				openPersonPicker(this.app, people, editor, sourceFile);
+				return true;
+			},
+		});
+
 		this.addCommand({
 			id: 'log-people-entities',
 			name: 'Log people entities (debug)',
