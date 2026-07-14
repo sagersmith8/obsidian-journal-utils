@@ -13,6 +13,7 @@ export interface JournalUtilsSettings {
 	avatarDecorationEnabled: boolean;
 	setupWizardComplete: boolean;
 	migrationCompletedAt: string | null;
+	lastMigrationLog: string[];
 }
 
 export const DEFAULT_SETTINGS: JournalUtilsSettings = {
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS: JournalUtilsSettings = {
 	avatarDecorationEnabled: true,
 	setupWizardComplete: false,
 	migrationCompletedAt: null,
+	lastMigrationLog: [],
 };
 
 export function mergeSettings(

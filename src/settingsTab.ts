@@ -68,6 +68,13 @@ export class JournalUtilsSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		containerEl.createEl('h3', { text: 'Migration' });
+		containerEl.createEl('p', {
+			text: this.plugin.settings.migrationCompletedAt
+				? `Last migration: ${this.plugin.settings.migrationCompletedAt}`
+				: 'People folder has not been migrated yet.',
+		});
+
 		containerEl.createEl('h3', { text: 'Ghost mentions' });
 		new Setting(containerEl)
 			.setName('Ghost blocklist')

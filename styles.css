@@ -141,3 +141,45 @@
 .journal-utils-picker-location {
 	color: var(--color-green);
 }
+
+.journal-utils-migration-modal {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 1rem;
+}
+
+.journal-utils-migration-warning {
+	color: var(--text-warning);
+	margin: 0;
+}
+
+.journal-utils-migration-summary,
+.journal-utils-migration-empty,
+.journal-utils-migration-row-detail {
+	color: var(--text-muted);
+	margin: 0;
+}
+
+.journal-utils-migration-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	max-height: 45vh;
+	overflow-y: auto;
+}
+
+.journal-utils-migration-row {
+	padding: 0.6rem 0.75rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+}
+
+.journal-utils-migration-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.journal-utils-migration-actions button {
+	flex: 1;
+}

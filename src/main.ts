@@ -1,7 +1,9 @@
 import { Notice, Platform, Plugin } from 'obsidian';
 import { openLocationPicker } from './modals/LocationPickerModal';
+import { MigrationPreviewModal } from './modals/MigrationPreviewModal';
 import { openPersonPicker } from './modals/PersonPickerModal';
 import { EntityService } from './services/EntityService';
+import { MigrationService } from './services/MigrationService';
 import { GhostService } from './services/GhostService';
 import { TemplateService } from './services/TemplateService';
 import { mergeSettings, type JournalUtilsSettings } from './settings';
@@ -11,6 +13,7 @@ export default class JournalUtilsPlugin extends Plugin {
 	settings!: JournalUtilsSettings;
 	entityService!: EntityService;
 	ghostService!: GhostService;
+	migrationService!: MigrationService;
 	templateService!: TemplateService;
 
 	async onload(): Promise<void> {
@@ -26,6 +29,7 @@ export default class JournalUtilsPlugin extends Plugin {
 			this.templateService,
 		);
 		this.ghostService = new GhostService(this.app, () => this.settings);
+		this.migrationService = new MigrationService(this.app, () => this.settings);
 
 		this.addSettingTab(new JournalUtilsSettingTab(this.app, this));
 		this.registerCacheInvalidationEvents();
@@ -127,6 +131,20 @@ export default class JournalUtilsPlugin extends Plugin {
 					(name) => this.ignoreGhost(name),
 				);
 				return true;
+			},
+		});
+
+		this.addCommand({
+			id: 'migrate-people-folder',
+			name: 'Migrate people folder to standard structure',
+			icon: 'folder-sync',
+			callback: () => {
+				new Notice('Commit or sync your vault before migrating.');
+				new MigrationPreviewModal(
+					this.app,
+					this,
+					this.migrationService,
+				).open();
 			},
 		});
 
