@@ -4,6 +4,8 @@ import type { EntityService } from '../services/EntityService';
 import type { MentionTrackingService } from '../services/MentionTrackingService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { buildWikilink, formatWikilinkForFile } from '../utils/links';
+import { showMentionTrackNotice } from '../utils/mentionNotices';
+import type { MentionTrackResult } from '../services/MentionTrackingService';
 
 export interface GhostActionContext {
 	entityService: EntityService;
@@ -73,14 +75,26 @@ export class GhostActionModal extends Modal {
 	}
 
 	private async createPerson(): Promise<void> {
-		await this.createAndInsert(async () => this.ctx.entityService.createPerson(this.ghost.name));
+		await this.createAndInsert(
+			() => this.ctx.entityService.createPerson(this.ghost.name),
+			(file) => this.ctx.mentionTrackingService.trackPeople(this.ctx.sourceFile, [file]),
+			'people',
+		);
 	}
 
 	private async createLocation(): Promise<void> {
-		await this.createAndInsert(async () => this.ctx.entityService.createLocation(this.ghost.name));
+		await this.createAndInsert(
+			() => this.ctx.entityService.createLocation(this.ghost.name),
+			(file) => this.ctx.mentionTrackingService.trackLocation(this.ctx.sourceFile, file),
+			'locations',
+		);
 	}
 
-	private async createAndInsert(create: () => Promise<TFile>): Promise<void> {
+	private async createAndInsert(
+		create: () => Promise<TFile>,
+		track: (file: TFile) => Promise<MentionTrackResult>,
+		listKey: 'people' | 'locations',
+	): Promise<void> {
 		try {
 			const file = await create();
 			const wikilink = formatWikilinkForFile(
@@ -89,6 +103,8 @@ export class GhostActionModal extends Modal {
 				this.ctx.sourceFile.path,
 			);
 			this.ctx.editor.replaceSelection(wikilink);
+			const result = await track(file);
+			showMentionTrackNotice(result, listKey);
 			new Notice(`Created ${file.basename}`);
 			this.refocusEditor();
 			this.close();

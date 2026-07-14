@@ -12,6 +12,7 @@ import {
 export interface MentionTrackResult {
 	changed: boolean;
 	addedLabels: string[];
+	failed?: boolean;
 }
 
 type MentionListKey = 'people' | 'locations';
@@ -123,7 +124,11 @@ export class MentionTrackingService {
 			});
 		} catch (error) {
 			console.error('[Journal Utils] Mention tracking failed:', error);
-			return { changed: false, addedLabels: [] };
+			return {
+				changed: false,
+				addedLabels: [],
+				failed: true,
+			};
 		}
 
 		return result;

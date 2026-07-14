@@ -211,4 +211,30 @@ describe('MentionTrackingService', () => {
 		expect(result).toEqual({ changed: false, addedLabels: [] });
 		expect(frontmatter.people).toEqual(['[[Steve Ryerson]]']);
 	});
+
+	it('returns failed when processFrontMatter throws', async () => {
+		const app = {
+			metadataCache: {
+				getFirstLinkpathDest: () => null,
+				fileToLinktext: (file: TFile) => file.basename,
+			},
+			vault: {
+				getAbstractFileByPath: (path: string) => makeTFile(path),
+			},
+			fileManager: {
+				processFrontMatter: vi.fn(async () => {
+					const error = new Error('bad yaml');
+					error.name = 'YAMLParseError';
+					throw error;
+				}),
+			},
+		} as unknown as App;
+		const service = makeService(app, { Joy: 'people/Joy/Joy.md' });
+		const source = makeTFile('journal/2026-07-12.md');
+		const joy = makeTFile('people/Joy/Joy.md');
+
+		const result = await service.trackPeople(source, [joy]);
+
+		expect(result).toEqual({ changed: false, addedLabels: [], failed: true });
+	});
 });

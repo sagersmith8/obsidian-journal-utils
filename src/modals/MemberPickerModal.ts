@@ -4,6 +4,7 @@ import type { EntityService } from '../services/EntityService';
 import type { MentionTrackingService } from '../services/MentionTrackingService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { formatWikilinkForFile } from '../utils/links';
+import { showMentionTrackNotice } from '../utils/mentionNotices';
 import { sanitizeEntityName } from '../utils/paths';
 
 type MemberListItem =
@@ -252,13 +253,18 @@ export class MemberPickerModal extends Modal {
 			this.ctx.sourceFile.path,
 		);
 		this.ctx.editor.replaceSelection(wikilink);
-		void this.ctx.mentionTrackingService.trackGroupInsert(
+		void this.trackGroup(file, members);
+		new Notice(message);
+		this.close();
+	}
+
+	private async trackGroup(file: TFile, members: string[]): Promise<void> {
+		const result = await this.ctx.mentionTrackingService.trackGroupInsert(
 			this.ctx.sourceFile,
 			file,
 			members,
 		);
-		new Notice(message);
-		this.close();
+		showMentionTrackNotice(result, 'people');
 	}
 
 	private showError(error: unknown): void {

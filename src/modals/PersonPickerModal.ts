@@ -12,6 +12,7 @@ import type { EntityService } from '../services/EntityService';
 import type { MentionTrackingService } from '../services/MentionTrackingService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { formatWikilinkForFile } from '../utils/links';
+import { showMentionTrackNotice } from '../utils/mentionNotices';
 import { sanitizeEntityName } from '../utils/paths';
 
 export type PersonPickerItem =
@@ -310,12 +311,11 @@ export class PersonPickerModal extends FuzzySuggestModal<PersonPickerItem> {
 	}
 
 	private async trackMention(file: TFile): Promise<void> {
-		if (this.entityService.isPrimaryGroupNote(file)) {
-			await this.mentionTrackingService.trackGroupInsert(this.sourceFile, file);
-			return;
-		}
+		const result = this.entityService.isPrimaryGroupNote(file)
+			? await this.mentionTrackingService.trackGroupInsert(this.sourceFile, file)
+			: await this.mentionTrackingService.trackPeople(this.sourceFile, [file]);
 
-		await this.mentionTrackingService.trackPeople(this.sourceFile, [file]);
+		showMentionTrackNotice(result, 'people');
 	}
 
 	private refocusEditor(): void {

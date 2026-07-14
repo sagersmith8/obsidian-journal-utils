@@ -11,6 +11,7 @@ import type { EntityService } from '../services/EntityService';
 import type { MentionTrackingService } from '../services/MentionTrackingService';
 import type { EntityEntry, GhostEntry } from '../types';
 import { formatWikilinkForFile } from '../utils/links';
+import { showMentionTrackNotice } from '../utils/mentionNotices';
 import { sanitizeEntityName } from '../utils/paths';
 
 export type LocationPickerItem =
@@ -233,8 +234,13 @@ export class LocationPickerModal extends FuzzySuggestModal<LocationPickerItem> {
 			this.sourcePath,
 		);
 		this.editor.replaceSelection(wikilink);
-		void this.mentionTrackingService.trackLocation(this.sourceFile, file);
+		void this.trackLocation(file);
 		this.refocusEditor();
+	}
+
+	private async trackLocation(file: TFile): Promise<void> {
+		const result = await this.mentionTrackingService.trackLocation(this.sourceFile, file);
+		showMentionTrackNotice(result, 'locations');
 	}
 
 	private refocusEditor(): void {
